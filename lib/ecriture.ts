@@ -1,4 +1,5 @@
 import { LETTERS } from "./alphabet";
+import { clusters } from "./mots";
 
 const MARKS = /[ً-ٰٟـ]/g;
 
@@ -112,4 +113,51 @@ export function advice(ops: Op[], reveal: boolean): string[] {
     }
   }
   return out.slice(0, 3);
+}
+
+const MARK_NAMES: Record<string, string> = {
+  "\u064E": "fatha",
+  "\u064F": "damma",
+  "\u0650": "kasra",
+  "\u0652": "soukoun",
+  "\u0651": "chadda",
+  "\u064B": "tanwin fatha",
+  "\u064C": "tanwin damma",
+  "\u064D": "tanwin kasra",
+};
+
+const describeMarks = (marks: string) =>
+  marks ? [...marks].map((m) => MARK_NAMES[m] ?? "un signe").join(" + ") : "aucun signe";
+
+/** Les signes d'une lettre, sans tenir compte de l'ordre (chadda avant ou après la voyelle). */
+const markKey = (marks: string) => [...marks].sort().join("");
+
+export type MarkCheck = { base: string; want: string; got: string; ok: boolean };
+export type ChaklCheck = Check & { marks: MarkCheck[] };
+
+/** Vérifie les lettres, puis le chakl lettre par lettre. */
+export function checkChakl(word: string, attempt: string): ChaklCheck {
+  const letters = check(word, attempt);
+  if (!letters.ok) return { ...letters, marks: [] };
+  const want = clusters(word);
+  const got = clusters(attempt.replace(/[\s\u0640]/g, "")).filter((c) => isArabicLetter(c.base));
+  const marks: MarkCheck[] = want.map((w, i) => ({
+    base: got[i]?.base ?? w.base,
+    want: w.marks,
+    got: got[i]?.marks ?? "",
+    ok: markKey(w.marks) === markKey(got[i]?.marks ?? ""),
+  }));
+  const ok = marks.every((m) => m.ok);
+  return { ...letters, ok, exact: ok && letters.exact, marks };
+}
+
+export function chaklAdvice(marks: MarkCheck[], reveal: boolean): string[] {
+  return marks
+    .filter((m) => !m.ok)
+    .map((m) =>
+      reveal
+        ? `Sur la lettre ${letterName(m.base)}, il fallait : ${describeMarks(m.want)}.`
+        : `Vérifie le chakl sur la lettre ${letterName(m.base)}.`,
+    )
+    .slice(0, 3);
 }

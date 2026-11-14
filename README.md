@@ -13,9 +13,12 @@ liste d'attente, et premières leçons interactives sur l'alphabet arabe.
 - `/app/lire` : « Lire et écrire », qui regroupe l'alphabet, l'écriture de mots et le chakl.
 - `/alphabet` : les 28 lettres, une leçon en cinq étapes pour chacune (découvrir la lettre,
   ses voyelles avec le chakl, la tracer, quiz, bravo).
-- `/app/ecrire` : exercice d'écriture. Un mot en français, l'enfant l'écrit en arabe avec
-  un clavier arabe à l'écran, l'app corrige lettre par lettre, puis montre le mot avec son
-  chakl et pose une question sur un signe. Cinq thèmes, 39 mots.
+- `/app/ecrire` : parcours d'écriture en cinq niveaux, qui s'ouvrent un à un (6 mots sur 8
+  réussis, en deux essais au plus, pour passer au suivant ; une à trois étoiles selon les
+  mots écrits du premier coup). Niveau 1 : recopier de petits mots. 2 : écrire à partir du
+  français. 3 : mots plus longs, audio seulement après une erreur. 4 : recopier avec le chakl.
+  5 : écrire avec le chakl, tapé sur le clavier arabe à l'écran. L'app corrige lettre par
+  lettre, puis le chakl lettre par lettre aux niveaux 4 et 5.
 - `/app/chakl` : guide des signes (fatha, damma, kasra, soukoun, chadda, tanwin).
 - `/app/coran` : courtes sourates, écoute verset par verset et répétition.
 - `/app/parents` : résumé des 7 derniers jours et effacement des données.
@@ -73,7 +76,7 @@ l'API d'IA, avec son âge et sa derja, sans son prénom.
 ## Contenu des leçons
 
 Tout le contenu de l'alphabet est dans `lib/alphabet.ts`. Les mots de l'exercice
-d'écriture, avec leur chakl, sont dans `lib/mots.ts` ; la correction (aucune IA, donc
+d'écriture, avec leur chakl, sont dans `lib/mots.ts` et les niveaux dans `lib/niveaux.ts` ; la correction (aucune IA, donc
 gratuite et prévisible) est dans `lib/ecriture.ts`. Les mots sont en arabe littéraire,
 l'arabe qui s'écrit.
 

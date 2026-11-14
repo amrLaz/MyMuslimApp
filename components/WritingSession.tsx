@@ -4,23 +4,41 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ArabicKeyboard from "@/components/ArabicKeyboard";
 import type { CountryId } from "@/lib/countries";
-import { advice, check, stripMarks, type Check } from "@/lib/ecriture";
-import { QUIZ_CHOICES, chaklQuestion, type Mot, type Theme } from "@/lib/mots";
+import { advice, check, checkChakl, chaklAdvice, stripMarks, type ChaklCheck } from "@/lib/ecriture";
+import { QUIZ_CHOICES, chaklQuestion } from "@/lib/mots";
+import { LEVELS, PASS_MARK, starsFor, type Level } from "@/lib/niveaux";
 import { speak } from "@/lib/speech";
-import { getProfile, logActivity, markWordsDone } from "@/lib/store";
+import { getProfile, logActivity, markWordsDone, saveLevelResult } from "@/lib/store";
+import type { Mot } from "@/lib/mots";
 
 type Phase = "write" | "right" | "revealed";
 type Outcome = { word: Mot; ok: boolean; firstTry: boolean };
 
 const MAX_TRIES = 2;
 
-export default function WritingSession({ theme }: { theme: Theme }) {
-  const words = theme.words;
+function evaluate(level: Level, word: Mot, text: string): ChaklCheck {
+  return level.chakl ? checkChakl(word.ar, text) : { ...check(word.ar, text), marks: [] };
+}
+
+/** Une case par lettre de la réponse : juste, fausse, en trop ou manquante. */
+function tilesOf(r: ChaklCheck): { text: string; cls: string }[] {
+  if (r.marks.length > 0) {
+    return r.marks.map((m) => ({ text: m.base + m.got, cls: m.ok ? "ok" : "wrong" }));
+  }
+  return r.ops.map((op) =>
+    op.type === "del"
+      ? { text: "؟", cls: "missing" }
+      : { text: op.got!, cls: op.type === "match" ? "ok" : op.type === "sub" ? "wrong" : "extra" },
+  );
+}
+
+export default function WritingSession({ level }: { level: Level }) {
+  const words = level.words;
   const [i, setI] = useState(0);
   const [text, setText] = useState("");
   const [tries, setTries] = useState(0);
   const [phase, setPhase] = useState<Phase>("write");
-  const [result, setResult] = useState<Check | null>(null);
+  const [result, setResult] = useState<ChaklCheck | null>(null);
   const [ownKeyboard, setOwnKeyboard] = useState(false);
   const [pick, setPick] = useState<string | null>(null);
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
@@ -35,30 +53,38 @@ export default function WritingSession({ theme }: { theme: Theme }) {
 
   const finished = outcomes.length === words.length;
   const word = words[Math.min(i, words.length - 1)];
-  const question = chaklQuestion(word.ar);
+  // Aux niveaux avec chakl, l'enfant l'a déjà tapé : pas de question sur les signes.
+  const question = level.chakl ? null : chaklQuestion(word.ar);
   const quizDone = !question || pick === question.answer;
+  const canListen = level.audio === "always" || tries > 0 || phase !== "write";
+
+  const succeeded = outcomes.filter((o) => o.ok).length;
+  const firstTry = outcomes.filter((o) => o.firstTry).length;
+  const passed = succeeded >= PASS_MARK;
+  const stars = starsFor(succeeded, firstTry);
 
   useEffect(() => {
     if (!finished || logged.current) return;
     logged.current = true;
     const good = outcomes.filter((o) => o.ok).map((o) => o.word);
     markWordsDone(good.map((w) => stripMarks(w.ar)));
+    saveLevelResult(level.id, passed, stars);
     logActivity({
       kind: "ecriture",
-      id: theme.id,
-      label: theme.title,
+      id: `niveau-${level.id}`,
+      label: `Écriture, niveau ${level.n}`,
       words: good.map((w) => ({ ar: w.ar, translit: w.translit, fr: w.fr })),
       review: outcomes.filter((o) => !o.ok).map((o) => o.word),
       corrections: outcomes.filter((o) => !o.firstTry).length,
     });
-  }, [finished, outcomes, theme]);
+  }, [finished, outcomes, level, passed, stars]);
 
   async function say(ar: string) {
     setAudioError(!(await speak(ar, derja)));
   }
 
   function verify() {
-    const r = check(word.ar, text);
+    const r = evaluate(level, word, text);
     setResult(r);
     if (r.nonArabic) return;
     if (r.ok) {
@@ -70,9 +96,7 @@ export default function WritingSession({ theme }: { theme: Theme }) {
     if (used >= MAX_TRIES) setPhase("revealed");
   }
 
-  function next() {
-    setOutcomes([...outcomes, { word, ok: phase === "right", firstTry: phase === "right" && tries === 0 }]);
-    setI(i + 1);
+  function reset() {
     setText("");
     setTries(0);
     setPhase("write");
@@ -81,17 +105,43 @@ export default function WritingSession({ theme }: { theme: Theme }) {
     setAudioError(false);
   }
 
+  function next() {
+    setOutcomes([...outcomes, { word, ok: phase === "right", firstTry: phase === "right" && tries === 0 }]);
+    setI(i + 1);
+    reset();
+  }
+
+  function restart() {
+    logged.current = false;
+    setOutcomes([]);
+    setI(0);
+    reset();
+  }
+
   if (finished) {
-    const firstTry = outcomes.filter((o) => o.firstTry).length;
+    const nextLevel = LEVELS[level.n];
     const missed = outcomes.filter((o) => !o.ok);
     return (
       <div className="stack">
         <div className="done">
-          <h1 className="done-title">Bravo !</h1>
-          <p className="done-text">
-            {firstTry} mot{firstTry > 1 ? "s" : ""} sur {words.length} écrit{firstTry > 1 ? "s" : ""} du
-            premier coup.
+          <p className="stars" role="img" aria-label={`${stars} étoile${stars > 1 ? "s" : ""} sur 3`}>
+            {"★".repeat(stars)}
+            <span className="stars-off">{"★".repeat(3 - stars)}</span>
           </p>
+          <h1 className="done-title">{passed ? "Niveau réussi !" : "Presque !"}</h1>
+          <p className="done-text">
+            {succeeded} mot{succeeded > 1 ? "s" : ""} réussi{succeeded > 1 ? "s" : ""} sur {words.length},
+            dont {firstTry} du premier coup.
+          </p>
+          {!passed && (
+            <p className="muted">
+              Il faut en réussir {PASS_MARK} sur {words.length} pour passer au niveau suivant. Tu peux
+              recommencer autant de fois que tu veux.
+            </p>
+          )}
+          {passed && nextLevel && (
+            <p className="muted">Le niveau {nextLevel.n} est débloqué : « {nextLevel.title} ».</p>
+          )}
         </div>
         <div className="next-card">
           <p className="caps">Les mots, avec leur chakl</p>
@@ -105,17 +155,19 @@ export default function WritingSession({ theme }: { theme: Theme }) {
           </ul>
         </div>
         {missed.length > 0 && (
-          <p className="muted">
-            À réécrire demain : {missed.map((o) => o.word.fr.toLowerCase()).join(", ")}.
-          </p>
+          <p className="muted">À réécrire : {missed.map((o) => o.word.fr.toLowerCase()).join(", ")}.</p>
         )}
-        <Link href="/app/ecrire" className="btn-next">Choisir un autre thème</Link>
-        <Link href="/app/lire" className="btn-plain link-btn">Retour</Link>
+        {passed && nextLevel ? (
+          <Link href={`/app/ecrire/${nextLevel.id}`} className="btn-next">Niveau suivant</Link>
+        ) : (
+          <button type="button" className="btn-next" onClick={restart}>Recommencer le niveau</button>
+        )}
+        <Link href="/app/ecrire" className="btn-plain link-btn">Tous les niveaux</Link>
       </div>
     );
   }
 
-  const shown = phase === "write" && result && !result.ok && !result.nonArabic ? result : null;
+  const wrong = phase === "write" && result && !result.ok && !result.nonArabic ? result : null;
   const lastTry = tries >= MAX_TRIES;
 
   return (
@@ -134,11 +186,19 @@ export default function WritingSession({ theme }: { theme: Theme }) {
       </div>
 
       <div className="prompt-card">
-        <p className="caps">Écris en arabe</p>
+        <p className="caps">
+          Niveau {level.n} · {level.mode === "copy" ? "Recopie en arabe" : "Écris en arabe"}
+          {level.chakl ? ", avec le chakl" : ""}
+        </p>
         <h1 className="prompt-word">{word.fr}</h1>
-        <button type="button" className="replay" onClick={() => void say(word.ar)}>
-          Écouter le mot
-        </button>
+        {level.mode === "copy" && phase === "write" && (
+          <p className="model" lang="ar" dir="rtl">{word.ar}</p>
+        )}
+        {canListen && (
+          <button type="button" className="replay" onClick={() => void say(word.ar)}>
+            Écouter le mot
+          </button>
+        )}
         {audioError && <p className="lesson-note" role="status">La lecture audio n'est pas disponible.</p>}
       </div>
 
@@ -165,34 +225,27 @@ export default function WritingSession({ theme }: { theme: Theme }) {
             </p>
           )}
 
-          {shown && (
+          {wrong && (
             <div className="tip" role="alert">
               <div className="tiles" dir="rtl">
-                {shown.ops.map((op, n) =>
-                  op.type === "del" ? (
-                    <span key={n} className="tile-l missing" aria-label="lettre manquante">؟</span>
-                  ) : (
-                    <span
-                      key={n}
-                      lang="ar"
-                      className={"tile-l " + (op.type === "match" ? "ok" : op.type === "sub" ? "wrong" : "extra")}
-                    >
-                      {op.got}
-                    </span>
-                  ),
-                )}
+                {tilesOf(wrong).map((t, n) => (
+                  <span key={n} lang="ar" className={"tile-l " + t.cls}>{t.text}</span>
+                ))}
               </div>
               <ul className="legend">
-                {advice(shown.ops, lastTry).map((m) => (
+                {(wrong.marks.length > 0 ? chaklAdvice(wrong.marks, lastTry) : advice(wrong.ops, lastTry)).map((m) => (
                   <li key={m}>{m}</li>
                 ))}
               </ul>
-              <p className="muted">Essaie encore : il te reste {MAX_TRIES - tries} essai{MAX_TRIES - tries > 1 ? "s" : ""}.</p>
+              <p className="muted">
+                Essaie encore : il te reste {MAX_TRIES - tries} essai{MAX_TRIES - tries > 1 ? "s" : ""}.
+              </p>
             </div>
           )}
 
           {!ownKeyboard && (
             <ArabicKeyboard
+              chakl={level.chakl}
               onKey={(c) => setText((t) => t + c)}
               onBackspace={() => setText((t) => [...t].slice(0, -1).join(""))}
             />
@@ -219,7 +272,7 @@ export default function WritingSession({ theme }: { theme: Theme }) {
             )}
             {phase === "revealed" && result && (
               <ul className="legend">
-                {advice(result.ops, true).map((m) => (
+                {(result.marks.length > 0 ? chaklAdvice(result.marks, true) : advice(result.ops, true)).map((m) => (
                   <li key={m}>{m}</li>
                 ))}
               </ul>

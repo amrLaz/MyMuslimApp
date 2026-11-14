@@ -30,6 +30,7 @@ const KEYS = {
   letters: "lissan.lettres",
   surahs: "lissan.sourates",
   words: "lissan.mots",
+  levels: "lissan.niveaux",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -80,6 +81,18 @@ export const getWords = () => read<string[]>(KEYS.words, []);
 export function markWordsDone(words: string[]): void {
   const known = getWords();
   write(KEYS.words, [...known, ...words.filter((w) => !known.includes(w))]);
+}
+
+export type LevelProgress = Record<string, { passed: boolean; stars: number }>;
+export const getLevels = () => read<LevelProgress>(KEYS.levels, {});
+/** Garde le meilleur résultat du niveau. */
+export function saveLevelResult(id: string, passed: boolean, stars: number): void {
+  const all = getLevels();
+  const best = all[id];
+  write(KEYS.levels, {
+    ...all,
+    [id]: { passed: passed || Boolean(best?.passed), stars: Math.max(stars, best?.stars ?? 0) },
+  });
 }
 
 export function eraseEverything(): void {

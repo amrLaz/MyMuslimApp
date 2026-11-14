@@ -154,3 +154,49 @@ describe("écriture", () => {
     for (const l of LETTERS) expect(letterVowels(l).length).toBeGreaterThanOrEqual(3);
   });
 });
+
+describe("niveaux", () => {
+  it("a cinq niveaux de huit mots qui existent tous", async () => {
+    const { LEVELS } = await import("./niveaux");
+    expect(LEVELS.map((l) => l.id)).toEqual(["1", "2", "3", "4", "5"]);
+    for (const l of LEVELS) {
+      expect(l.words, l.title).toHaveLength(8);
+      expect(new Set(l.words.map((w) => w.ar)).size, l.title).toBe(8);
+    }
+  });
+
+  it("n'ouvre un niveau que si le précédent est réussi", async () => {
+    const { LEVELS, isUnlocked } = await import("./niveaux");
+    expect(isUnlocked(LEVELS[0], {})).toBe(true);
+    expect(isUnlocked(LEVELS[1], {})).toBe(false);
+    expect(isUnlocked(LEVELS[1], { "1": { passed: false, stars: 0 } })).toBe(false);
+    expect(isUnlocked(LEVELS[1], { "1": { passed: true, stars: 1 } })).toBe(true);
+    expect(isUnlocked(LEVELS[3], { "1": { passed: true, stars: 3 }, "2": { passed: true, stars: 3 } })).toBe(false);
+  });
+
+  it("donne les étoiles selon les mots écrits du premier coup, et aucune sans réussite", async () => {
+    const { starsFor } = await import("./niveaux");
+    expect([starsFor(5, 5), starsFor(6, 2), starsFor(6, 5), starsFor(8, 6), starsFor(8, 7), starsFor(8, 8)]).toEqual([0, 1, 2, 2, 3, 3]);
+  });
+
+  it("vérifie le chakl lettre par lettre", async () => {
+    const { checkChakl, chaklAdvice } = await import("./ecriture");
+    expect(checkChakl("كَلْب", "كَلْب").ok).toBe(true);
+    expect(checkChakl("جَدَّة", "جَدَّة").ok).toBe(true);
+    // chadda et voyelle dans l'autre ordre : même mot
+    expect(checkChakl("جَدَّة", "جَدَّة".replace("َّ", "َّ")).ok).toBe(true);
+    // lettres justes, chakl oublié
+    const none = checkChakl("كَلْب", "كلب");
+    expect(none.ok).toBe(false);
+    expect(none.marks.filter((m) => !m.ok).map((m) => m.base)).toEqual(["ك", "ل"]);
+    expect(chaklAdvice(none.marks, false)[0]).toBe("Vérifie le chakl sur la lettre Kaf.");
+    expect(chaklAdvice(none.marks, true)[0]).toContain("il fallait : fatha");
+    // mauvaise voyelle
+    const wrong = checkChakl("كَلْب", "كُلْب");
+    expect(wrong.marks.filter((m) => !m.ok).map((m) => m.base)).toEqual(["ك"]);
+    // lettres fausses : on corrige d'abord les lettres
+    const letters = checkChakl("كَلْب", "كَتْب");
+    expect(letters.marks).toEqual([]);
+    expect(letters.ops.some((o) => o.type === "sub")).toBe(true);
+  });
+});

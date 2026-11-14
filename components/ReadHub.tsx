@@ -3,12 +3,18 @@
 import Link from "next/link";
 import { LETTERS } from "@/lib/alphabet";
 import { ALL_WORDS } from "@/lib/mots";
-import { getLetters, getWords, useStored } from "@/lib/store";
+import { LEVELS } from "@/lib/niveaux";
+import { getLetters, getLevels, getWords, useStored } from "@/lib/store";
 
 export default function ReadHub() {
-  const { value } = useStored(() => ({ letters: getLetters().length, words: getWords().length }));
+  const { value } = useStored(() => ({
+    letters: getLetters().length,
+    words: getWords().length,
+    levels: Object.values(getLevels()).filter((l) => l.passed).length,
+  }));
   const letters = value?.letters ?? 0;
   const words = value?.words ?? 0;
+  const levels = value?.levels ?? 0;
   return (
     <div className="stack">
       <div>
@@ -27,8 +33,8 @@ export default function ReadHub() {
         <span className="module-ar" lang="ar" dir="rtl">كتابة</span>
         <span className="module-body">
           <span className="module-title">Écrire des mots</span>
-          <span className="muted">Un mot en français : écris-le en arabe. Lissan te corrige lettre par lettre.</span>
-          <span className="module-progress">{words} mot{words > 1 ? "s" : ""} sur {ALL_WORDS.length}</span>
+          <span className="muted">Cinq niveaux : recopier, écrire, puis écrire avec le chakl. Lissan te corrige lettre par lettre.</span>
+          <span className="module-progress">{levels} niveau{levels > 1 ? "x" : ""} sur {LEVELS.length} · {words} mot{words > 1 ? "s" : ""} sur {ALL_WORDS.length}</span>
         </span>
       </Link>
       <Link href="/app/chakl" className="module">

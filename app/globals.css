@@ -1266,3 +1266,42 @@ a.btn-next:hover {
   font-size: 24px;
   vertical-align: middle;
 }
+
+/* ---------- Niveaux ---------- */
+
+.level-n {
+  min-width: 56px;
+  font-family: var(--font-display);
+  font-size: 32px;
+}
+.module.locked {
+  background: var(--sand-deep);
+  border-style: dashed;
+  color: var(--ink-mute);
+}
+.module.locked .module-ar {
+  color: var(--ink-mute);
+}
+.stars {
+  font-size: 44px;
+  line-height: 1.2;
+  color: #c98a1b;
+}
+.stars-small {
+  margin-left: 6px;
+  font-size: 16px;
+  color: #c98a1b;
+}
+.stars-off {
+  color: var(--line-strong);
+}
+.model {
+  margin: 8px 0;
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 2;
+  color: var(--teal);
+}
+.key-sign {
+  color: var(--clay-deep);
+}
