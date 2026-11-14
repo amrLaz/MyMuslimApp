@@ -100,3 +100,57 @@ describe("wav", () => {
     expect([view.getInt16(46, true), view.getInt16(48, true), view.getInt16(50, true)]).toEqual([32767, -32768, 32767]);
   });
 });
+
+describe("écriture", () => {
+  it("accepte la bonne réponse avec ou sans chakl, et signale la hamza oubliée", async () => {
+    const { check } = await import("./ecriture");
+    expect(check("قِطّ", "قط")).toMatchObject({ ok: true, exact: true });
+    expect(check("قِطّ", "قِطّ")).toMatchObject({ ok: true, exact: true });
+    expect(check("أَسَد", "اسد")).toMatchObject({ ok: true, exact: false });
+    expect(check("بَاب", "bab").nonArabic).toBe(true);
+    expect(check("بَاب", "").nonArabic).toBe(true);
+  });
+
+  it("repère les lettres qui ne diffèrent que par les points", async () => {
+    const { check, advice } = await import("./ecriture");
+    const r = check("بَيْت", "تيت");
+    expect(r.ok).toBe(false);
+    expect(r.ops[0]).toMatchObject({ type: "sub", want: "ب", got: "ت" });
+    expect(advice(r.ops, false)[0]).toContain("ressemble");
+    expect(advice(r.ops, false)[0]).not.toContain("Ba");
+    expect(advice(r.ops, true)[0]).toContain("Il fallait Ba");
+  });
+
+  it("repère une lettre manquante ou en trop", async () => {
+    const { check, advice } = await import("./ecriture");
+    const missing = check("كِتَاب", "كتب");
+    expect(missing.ops.filter((o) => o.type === "del")).toEqual([{ type: "del", want: "ا" }]);
+    expect(advice(missing.ops, false)).toEqual(["Il manque une lettre."]);
+    expect(advice(missing.ops, true)).toEqual(["Il manque la lettre Alif."]);
+    const extra = check("بَاب", "بااب");
+    expect(extra.ops.filter((o) => o.type === "ins")).toHaveLength(1);
+    expect(advice(extra.ops, false)[0]).toContain("en trop");
+  });
+
+  it("a des mots complets : chakl présent, lettres arabes, pas de doublon", async () => {
+    const { ALL_WORDS, chaklQuestion, clusters } = await import("./mots");
+    const { stripMarks } = await import("./ecriture");
+    const skeletons = ALL_WORDS.map((w) => stripMarks(w.ar));
+    expect(new Set(skeletons).size).toBe(ALL_WORDS.length);
+    for (const w of ALL_WORDS) {
+      expect(stripMarks(w.ar), w.fr).toMatch(/^[ء-ي]+$/);
+      expect(w.ar.length, w.fr).toBeGreaterThan(stripMarks(w.ar).length);
+      expect(chaklQuestion(w.ar), w.fr).not.toBeNull();
+      expect(w.translit && w.fr).toBeTruthy();
+    }
+    expect(clusters("قِطّ").map((c) => c.base)).toEqual(["ق", "ط"]);
+    expect(chaklQuestion("كَلْب")).toEqual({ base: "ك", answer: "َ" });
+  });
+
+  it("donne les voyelles de chaque lettre", async () => {
+    const { LETTERS, letterVowels } = await import("./alphabet");
+    expect(letterVowels(LETTERS.find((l) => l.id === "ba")!).map((v) => v.say)).toEqual(["ba", "bou", "bi", "b"]);
+    expect(letterVowels(LETTERS.find((l) => l.id === "alif")!).map((v) => v.say)).toEqual(["a", "ou", "i"]);
+    for (const l of LETTERS) expect(letterVowels(l).length).toBeGreaterThanOrEqual(3);
+  });
+});

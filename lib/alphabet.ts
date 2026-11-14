@@ -241,3 +241,35 @@ export function quizOptions(letter: Letter): string[] {
   const shift = indexOfLetter(letter) % options.length;
   return [...options.slice(shift), ...options.slice(0, shift)];
 }
+
+/** Les signes du chakl (voyelles courtes et signes de lecture). */
+export const HARAKAT = {
+  fatha: "\u064E",
+  damma: "\u064F",
+  kasra: "\u0650",
+  sukun: "\u0652",
+  shadda: "\u0651",
+} as const;
+
+/**
+ * La lettre avec chacune des trois voyelles courtes puis le soukoun, avec leur
+ * lecture. Le alif ne porte pas de voyelle lui-même : on le montre avec sa hamza.
+ */
+export function letterVowels(letter: Letter): { glyph: string; say: string; name: string }[] {
+  if (letter.id === "alif") {
+    return [
+      { glyph: "أ" + HARAKAT.fatha, say: "a", name: "fatha" },
+      { glyph: "أ" + HARAKAT.damma, say: "ou", name: "damma" },
+      { glyph: "إ" + HARAKAT.kasra, say: "i", name: "kasra" },
+    ];
+  }
+  // Toutes les syllabes de la liste se terminent par « a » : le reste est la consonne.
+  const stem = letter.syllable.slice(0, -1);
+  const g = letter.glyph;
+  return [
+    { glyph: g + HARAKAT.fatha, say: stem + "a", name: "fatha" },
+    { glyph: g + HARAKAT.damma, say: stem + "ou", name: "damma" },
+    { glyph: g + HARAKAT.kasra, say: stem + "i", name: "kasra" },
+    { glyph: g + HARAKAT.sukun, say: stem, name: "soukoun" },
+  ];
+}

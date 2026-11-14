@@ -10,7 +10,13 @@ liste d'attente, et premières leçons interactives sur l'alphabet arabe.
   (prénom, âge, derja, objectifs).
 - `/app/parler` : conversation à voix haute avec le tuteur IA, en derja, autour
   d'une situation (raconter sa journée, appeler mamie, au souk…).
-- `/alphabet` : les 28 lettres, une leçon en quatre étapes pour chacune.
+- `/app/lire` : « Lire et écrire », qui regroupe l'alphabet, l'écriture de mots et le chakl.
+- `/alphabet` : les 28 lettres, une leçon en cinq étapes pour chacune (découvrir la lettre,
+  ses voyelles avec le chakl, la tracer, quiz, bravo).
+- `/app/ecrire` : exercice d'écriture. Un mot en français, l'enfant l'écrit en arabe avec
+  un clavier arabe à l'écran, l'app corrige lettre par lettre, puis montre le mot avec son
+  chakl et pose une question sur un signe. Cinq thèmes, 39 mots.
+- `/app/chakl` : guide des signes (fatha, damma, kasra, soukoun, chadda, tanwin).
 - `/app/coran` : courtes sourates, écoute verset par verset et répétition.
 - `/app/parents` : résumé des 7 derniers jours et effacement des données.
 
@@ -66,12 +72,15 @@ l'API d'IA, avec son âge et sa derja, sans son prénom.
 
 ## Contenu des leçons
 
-Tout le contenu de l'alphabet est dans `lib/alphabet.ts`.
+Tout le contenu de l'alphabet est dans `lib/alphabet.ts`. Les mots de l'exercice
+d'écriture, avec leur chakl, sont dans `lib/mots.ts` ; la correction (aucune IA, donc
+gratuite et prévisible) est dans `lib/ecriture.ts`. Les mots sont en arabe littéraire,
+l'arabe qui s'écrit.
 
 ## À compléter avant le lancement
 
 - Le prix (`[VOTRE PRIX]` dans la FAQ, `app/page.tsx`).
 - Les mentions légales et la politique de confidentialité (pied de page).
-- Une relecture du contenu des 28 lettres par un enseignant d'arabe.
+- Une relecture du contenu des 28 lettres et des 39 mots (chakl compris) par un enseignant d'arabe.
 - Des essais du tuteur avec de vrais enfants, dans les trois derjas.
 - La lecture Warsh, annoncée sur la page d'accueil.

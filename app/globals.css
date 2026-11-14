@@ -1037,6 +1037,7 @@ a.btn-next:hover {
 .words-ar {
   font-weight: 700;
   font-size: 24px;
+  line-height: 2;
   color: var(--teal);
 }
 .summary {
@@ -1115,4 +1116,153 @@ a.btn-next:hover {
   background: var(--clay-deep);
   color: var(--white);
   font-weight: 700;
+}
+
+/* ---------- Écriture et chakl ---------- */
+
+.vowels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.vowel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px 12px;
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  color: var(--ink);
+}
+.vowel:hover {
+  border-color: var(--teal);
+}
+.vowel-glyph {
+  font-weight: 700;
+  font-size: 64px;
+  line-height: 1.6;
+  color: var(--teal);
+}
+.vowel-say {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+}
+.vowel-name {
+  font-size: 13px;
+  color: var(--ink-mute);
+}
+.legend {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+.legend li + li {
+  margin-top: 4px;
+}
+.sign {
+  width: 100%;
+  text-align: left;
+}
+
+.prompt-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 20px;
+  text-align: center;
+}
+.prompt-word {
+  margin: 4px 0 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1.2;
+}
+.answer {
+  width: 100%;
+  min-height: 72px;
+  padding: 0 16px;
+  border: 2px solid var(--teal);
+  border-radius: 18px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-arabic);
+  font-weight: 700;
+  font-size: 40px;
+  text-align: center;
+}
+.keyboard {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  direction: rtl;
+}
+.key {
+  min-height: 48px;
+  border: 1.5px solid var(--edge);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 26px;
+  line-height: 1.2;
+  font-family: var(--font-arabic);
+  font-weight: 700;
+}
+.key:active {
+  background: var(--teal-tint);
+}
+.key-wide {
+  grid-column: span 2;
+  font-family: var(--font-body);
+  font-size: 15px;
+  direction: ltr;
+}
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.tile-l {
+  min-width: 44px;
+  padding: 0 8px;
+  text-align: center;
+  font-family: var(--font-arabic);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.6;
+  border-radius: 12px;
+  border: 2px solid var(--line-strong);
+  background: var(--white);
+}
+.tile-l.ok {
+  border-color: var(--green);
+  background: var(--green-tint);
+  color: #0f3d26;
+}
+.tile-l.wrong,
+.tile-l.extra {
+  border-color: var(--clay-deep);
+  background: var(--clay-tint);
+  color: #5a1f10;
+}
+.tile-l.missing {
+  border-style: dashed;
+  color: var(--ink-mute);
+}
+.solution {
+  padding-top: 16px;
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 2;
+  text-align: center;
+  color: var(--teal);
+}
+.mark-glyph {
+  font-size: 24px;
+  vertical-align: middle;
 }

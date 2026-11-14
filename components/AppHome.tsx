@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { LETTERS } from "@/lib/alphabet";
 import { SURAHS } from "@/lib/coran";
-import { getJournal, getLetters, getProfile, getSurahs, useStored } from "@/lib/store";
+import { getJournal, getLetters, getProfile, getSurahs, getWords, useStored } from "@/lib/store";
 
 export default function AppHome() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function AppHome() {
     letters: getLetters().length,
     talks: getJournal().filter((a) => a.kind === "conversation").length,
     surahs: getSurahs().length,
+    words: getWords().length,
   }));
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function AppHome() {
   }, [ready, value, router]);
 
   if (!value?.profile) return null;
-  const { profile, letters, talks, surahs } = value;
+  const { profile, letters, talks, surahs, words } = value;
 
   const modules = [
     {
@@ -34,11 +35,11 @@ export default function AppHome() {
     },
     {
       id: "lire",
-      href: "/alphabet",
+      href: "/app/lire",
       ar: "كتابة",
       title: "Lire et écrire",
-      text: "Les lettres : leur son, leurs formes, leur tracé.",
-      progress: `${letters} lettre${letters > 1 ? "s" : ""} sur ${LETTERS.length}`,
+      text: "Les lettres, le chakl, et écrire des mots en arabe.",
+      progress: `${letters} lettre${letters > 1 ? "s" : ""} sur ${LETTERS.length} · ${words} mot${words > 1 ? "s" : ""} écrit${words > 1 ? "s" : ""}`,
     },
     {
       id: "coran",

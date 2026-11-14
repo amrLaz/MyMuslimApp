@@ -8,7 +8,7 @@ export default function AlphabetPage() {
   return (
     <main className="alphabet">
       <header className="lesson-top">
-        <Link href="/app" className="lesson-crumb">← Accueil</Link>
+        <Link href="/app/lire" className="lesson-crumb">← Lire et écrire</Link>
         <span className="brand-ar" lang="ar" dir="rtl">لسان</span>
       </header>
       <h1 className="lesson-title">L'alphabet arabe</h1>

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { CountryId } from "@/lib/countries";
+import { LOCALES as LOCALE } from "@/lib/countries";
 import type { Scenario } from "@/lib/scenarios";
 import { getProfile, logActivity, type Profile, type Word } from "@/lib/store";
 import { MicError, canRecord, startRecording, type Recorder } from "@/lib/recorder";
 import type { Turn, TutorReply } from "@/lib/tuteur";
+import { speak, stopSpeaking } from "@/lib/speech";
 import { recordingToWav } from "@/lib/wav";
 
 type Item = { role: "tutor"; reply: TutorReply } | { role: "child"; text: string };
@@ -22,62 +23,10 @@ type Recognition = {
   stop(): void;
 };
 
-const LOCALE = { ma: "ar-MA", dz: "ar-DZ", tn: "ar-TN" } as const;
 
 function recognitionClass(): (new () => Recognition) | undefined {
   const w = window as unknown as Record<string, new () => Recognition>;
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
-}
-
-function browserSpeak(text: string, locale: string) {
-  if (!("speechSynthesis" in window)) return;
-  const u = new SpeechSynthesisUtterance(text);
-  const voices = window.speechSynthesis.getVoices();
-  // La voix de la derja si l'appareil en a une, sinon n'importe quelle voix arabe.
-  const voice =
-    voices.find((v) => v.lang === locale) ?? voices.find((v) => v.lang.startsWith("ar"));
-  if (voice) u.voice = voice;
-  u.lang = voice?.lang ?? locale;
-  u.rate = 0.85;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
-}
-
-let current: HTMLAudioElement | null = null;
-let speakId = 0;
-// Les phrases déjà prononcées sont gardées : « Réécouter » ne coûte rien de plus.
-const voiceCache = new Map<string, string>();
-
-function stopSpeaking() {
-  speakId += 1;
-  current?.pause();
-  current = null;
-  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-}
-
-/** La voix neuronale du serveur si elle est configurée, sinon celle du navigateur. */
-async function speak(text: string, derja: CountryId) {
-  stopSpeaking();
-  const mine = speakId;
-  const cacheKey = `${derja}:${text}`;
-  try {
-    let url = voiceCache.get(cacheKey);
-    if (!url) {
-      const res = await fetch("/api/voix", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ derja, text }),
-      });
-      if (!res.ok) throw new Error("voix");
-      url = URL.createObjectURL(await res.blob());
-      voiceCache.set(cacheKey, url);
-    }
-    if (mine !== speakId) return;
-    current = new Audio(url);
-    await current.play();
-  } catch {
-    if (mine === speakId) browserSpeak(text, LOCALE[derja]);
-  }
 }
 
 export default function Conversation({ scenario }: { scenario: Scenario }) {

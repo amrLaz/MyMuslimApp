@@ -6,14 +6,17 @@ import {
   DEFAULT_TRACE,
   LETTERS,
   letterForms,
+  letterVowels,
   letterNumber,
   nextLetter,
   quizOptions,
   type Letter,
 } from "@/lib/alphabet";
-import { markLetterDone } from "@/lib/store";
+import type { CountryId } from "@/lib/countries";
+import { speak } from "@/lib/speech";
+import { getProfile, markLetterDone } from "@/lib/store";
 
-const STEPS = ["letter", "trace", "quiz", "done"] as const;
+const STEPS = ["letter", "voyelles", "trace", "quiz", "done"] as const;
 /** Nombre de points tracés à partir duquel on considère que l'enfant a essayé. */
 const MIN_TRACE_POINTS = 15;
 
@@ -30,6 +33,12 @@ export default function Lesson({ letter }: { letter: Letter }) {
   const [drawing, setDrawing] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [audioError, setAudioError] = useState(false);
+  const [derja, setDerja] = useState<CountryId>("ma");
+
+  useEffect(() => {
+    const p = getProfile();
+    if (p) setDerja(p.derja);
+  }, []);
 
   const cur = STEPS[step];
   const next = nextLetter(letter);
@@ -42,17 +51,8 @@ export default function Lesson({ letter }: { letter: Letter }) {
     if (cur === "done") markLetterDone(letter.id, letter.name);
   }, [cur, letter.id, letter.name]);
 
-  function speak() {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setAudioError(true);
-      return;
-    }
-    const u = new SpeechSynthesisUtterance(letter.arName);
-    u.lang = "ar-SA";
-    u.rate = 0.8;
-    u.onerror = () => setAudioError(true);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+  async function say(text: string) {
+    setAudioError(!(await speak(text, derja)));
   }
 
   function restart() {
@@ -112,7 +112,7 @@ export default function Lesson({ letter }: { letter: Letter }) {
               <h1 className="letter-name">{letter.name}</h1>
               <p className="muted">{letter.hint}</p>
             </div>
-            <button type="button" className="btn-listen" onClick={speak}>Écouter la lettre</button>
+            <button type="button" className="btn-listen" onClick={() => void say(letter.arName)}>Écouter la lettre</button>
             {audioNote}
             <div>
               <p className="lesson-label">Ses 4 formes</p>
@@ -132,6 +132,34 @@ export default function Lesson({ letter }: { letter: Letter }) {
               </div>
               <p className="word-ar" lang="ar" dir="rtl">{letter.word.ar}</p>
             </div>
+          </>
+        )}
+
+        {cur === "voyelles" && (
+          <>
+            <div>
+              <h1 className="lesson-title">Les voyelles : le chakl</h1>
+              <p className="muted">
+                De petits signes, au-dessus ou en dessous de la lettre, disent comment la lire.
+                On les appelle le chakl. Touche chaque case pour écouter.
+              </p>
+            </div>
+            <div className="vowels">
+              {letterVowels(letter).map((v) => (
+                <button type="button" key={v.name} className="vowel" onClick={() => void say(v.glyph)}>
+                  <span className="vowel-glyph" lang="ar" dir="rtl">{v.glyph}</span>
+                  <span className="vowel-say">{v.say}</span>
+                  <span className="vowel-name">{v.name}</span>
+                </button>
+              ))}
+            </div>
+            {audioNote}
+            <ul className="legend">
+              <li><strong>Fatha</strong> : un petit trait au-dessus → « a »</li>
+              <li><strong>Damma</strong> : un petit « و » au-dessus → « ou »</li>
+              <li><strong>Kasra</strong> : un petit trait en dessous → « i »</li>
+              {letter.id !== "alif" && <li><strong>Soukoun</strong> : un petit rond au-dessus → pas de voyelle</li>}
+            </ul>
           </>
         )}
 
@@ -178,7 +206,7 @@ export default function Lesson({ letter }: { letter: Letter }) {
               <h1 className="lesson-title">Quelle lettre fait « {letter.syllable} » ?</h1>
               <p className="muted">Écoute, puis touche la bonne lettre.</p>
             </div>
-            <button type="button" className="btn-teal" onClick={speak}>Écouter</button>
+            <button type="button" className="btn-teal" onClick={() => void say(letterVowels(letter)[0].glyph)}>Écouter</button>
             {audioNote}
             <div className="options">
               {quizOptions(letter).map((glyph) => {

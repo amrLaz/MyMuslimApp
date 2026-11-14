@@ -12,6 +12,7 @@ import {
   getLetters,
   getProfile,
   getSurahs,
+  getWords,
   lastWeek,
   useStored,
 } from "@/lib/store";
@@ -24,10 +25,11 @@ export default function ParentSummary() {
     week: lastWeek(getJournal()),
     letters: getLetters(),
     surahs: getSurahs(),
+    words: getWords(),
   }));
 
   if (!ready || !value) return null;
-  const { profile, week, letters, surahs } = value;
+  const { profile, week, letters, surahs, words: wordsDone } = value;
 
   if (!profile) {
     return (
@@ -41,6 +43,9 @@ export default function ParentSummary() {
   const talks = week.filter((a) => a.kind === "conversation");
   const newLetters = week.filter((a) => a.kind === "lettre");
   const listens = week.filter((a) => a.kind === "sourate");
+  const writes = week.filter((a) => a.kind === "ecriture");
+  const written = writes.flatMap((a) => a.words ?? []);
+  const toReview = [...new Map(writes.flatMap((a) => a.review ?? []).map((w) => [w.ar, w])).values()];
   const words = talks.flatMap((t) => t.words ?? []);
   const corrections = talks.reduce((n, t) => n + (t.corrections ?? 0), 0);
   const days = new Set(week.map((a) => a.at.slice(0, 10))).size;
@@ -71,6 +76,7 @@ export default function ParentSummary() {
             <li><strong>{days}</strong> jour{days > 1 ? "s" : ""} d'activité</li>
             <li><strong>{talks.length}</strong> conversation{talks.length > 1 ? "s" : ""} en derja</li>
             <li><strong>{newLetters.length}</strong> nouvelle{newLetters.length > 1 ? "s" : ""} lettre{newLetters.length > 1 ? "s" : ""}</li>
+            <li><strong>{written.length}</strong> mot{written.length > 1 ? "s" : ""} écrit{written.length > 1 ? "s" : ""} en arabe</li>
             <li><strong>{listens.length}</strong> écoute{listens.length > 1 ? "s" : ""} complète{listens.length > 1 ? "s" : ""} de sourate</li>
           </ul>
         )}
@@ -94,6 +100,7 @@ export default function ParentSummary() {
         <p className="caps">Depuis le début</p>
         <ul className="summary">
           <li><strong>{letters.length}</strong> lettre{letters.length > 1 ? "s" : ""} sur {LETTERS.length}</li>
+          <li><strong>{wordsDone.length}</strong> mot{wordsDone.length > 1 ? "s" : ""} écrit{wordsDone.length > 1 ? "s" : ""} correctement</li>
           <li><strong>{surahs.length}</strong> sourate{surahs.length > 1 ? "s" : ""} sur {SURAHS.length} connue{surahs.length > 1 ? "s" : ""} par cœur</li>
         </ul>
       </section>
@@ -103,6 +110,12 @@ export default function ParentSummary() {
         <ul className="summary">
           {corrections > 0 && (
             <li>{corrections} correction{corrections > 1 ? "s" : ""} de derja cette semaine : refaites une des situations ensemble.</li>
+          )}
+          {toReview.length > 0 && (
+            <li>
+              Mots à réécrire :{" "}
+              {toReview.slice(-6).map((w) => `${w.ar} (${w.fr})`).join(", ")}
+            </li>
           )}
           {nextLetter && <li>Prochaine lettre : {nextLetter.name} ({nextLetter.glyph})</li>}
           {nextSurah && <li>Prochaine sourate : {nextSurah.transliteration}</li>}

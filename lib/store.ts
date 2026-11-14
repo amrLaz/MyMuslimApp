@@ -14,12 +14,14 @@ export type Profile = { name: string; age: number; derja: CountryId; goals: Goal
 export type Word = { ar: string; translit: string; fr: string };
 export type Activity = {
   at: string;
-  kind: "lettre" | "conversation" | "sourate";
+  kind: "lettre" | "conversation" | "sourate" | "ecriture";
   id: string;
   label: string;
   words?: Word[];
   /** Nombre de corrections données par le tuteur pendant la conversation. */
   corrections?: number;
+  /** Mots écrits à revoir (exercice d'écriture). */
+  review?: Word[];
 };
 
 const KEYS = {
@@ -27,6 +29,7 @@ const KEYS = {
   journal: "lissan.journal",
   letters: "lissan.lettres",
   surahs: "lissan.sourates",
+  words: "lissan.mots",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -71,6 +74,12 @@ export const getSurahs = () => read<number[]>(KEYS.surahs, []);
 export function setSurahKnown(id: number, known: boolean): void {
   const rest = getSurahs().filter((s) => s !== id);
   write(KEYS.surahs, known ? [...rest, id] : rest);
+}
+
+export const getWords = () => read<string[]>(KEYS.words, []);
+export function markWordsDone(words: string[]): void {
+  const known = getWords();
+  write(KEYS.words, [...known, ...words.filter((w) => !known.includes(w))]);
 }
 
 export function eraseEverything(): void {
