@@ -41,8 +41,12 @@ de conversation affiche que le tuteur n'est pas configuré. Le modèle se change
 avec `TUTOR_MODEL`. La consigne du tuteur et ses garde-fous sont dans
 `lib/tuteur.ts`, les situations dans `lib/scenarios.ts`.
 
-Le micro et la voix du tuteur utilisent la reconnaissance et la synthèse
-vocales du navigateur : leur qualité en derja dépend de l'appareil.
+**Voix du tuteur.** Avec `AZURE_SPEECH_KEY` et `AZURE_SPEECH_REGION`, le tuteur
+parle avec les voix neuronales d'Azure Speech propres à chaque pays (Mouna pour
+le Maroc, Amina pour l'Algérie, Reem pour la Tunisie), via `app/api/voix`. Sans
+ces variables, l'app utilise la voix du navigateur, nettement plus robotique.
+Le micro de l'enfant utilise toujours la reconnaissance vocale du navigateur :
+sa qualité en derja dépend de l'appareil.
 
 ## Coran
 

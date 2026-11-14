@@ -72,3 +72,17 @@ describe("suivi parents", () => {
     expect(week.map((a) => a.at)).toEqual(["2026-11-14T09:00:00Z"]);
   });
 });
+
+describe("voix", () => {
+  it("choisit la voix du pays et échappe le texte", async () => {
+    const { buildSsml, parseSpeechRequest, VOICES } = await import("./voix");
+    expect(VOICES.dz.name).toBe("ar-DZ-AminaNeural");
+    const ssml = buildSsml("ma", 'a < b & "c"');
+    expect(ssml).toContain('name="ar-MA-MounaNeural"');
+    expect(ssml).toContain("a &lt; b &amp; &quot;c&quot;");
+    expect(parseSpeechRequest({ derja: "tn", text: " مرحبا " })).toEqual({ ok: true, derja: "tn", text: "مرحبا" });
+    expect(parseSpeechRequest({ derja: "eg", text: "x" }).ok).toBe(false);
+    expect(parseSpeechRequest({ derja: "ma", text: "x".repeat(301) }).ok).toBe(false);
+    expect(parseSpeechRequest({ derja: "ma", text: "  " }).ok).toBe(false);
+  });
+});

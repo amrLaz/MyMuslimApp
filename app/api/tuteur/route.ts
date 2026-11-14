@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { NextResponse } from "next/server";
+import { clientIp, createLimiter } from "@/lib/ratelimit";
 import {
   LAST_TURN,
   MAX_CHILD_TURNS,
@@ -13,23 +14,7 @@ import {
 
 const MODEL = process.env.TUTOR_MODEL || "claude-opus-5-5";
 
-// Garde-fou contre l'abus de la clé API : 40 messages par tranche de 10 minutes
-// et par adresse. En mémoire, donc par instance de serveur.
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_PER_WINDOW = 40;
-const hits = new Map<string, number[]>();
-
-function allowed(ip: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= MAX_PER_WINDOW) {
-    hits.set(ip, recent);
-    return false;
-  }
-  hits.set(ip, [...recent, now]);
-  if (hits.size > 5000) hits.clear();
-  return true;
-}
+const allowed = createLimiter(40);
 
 function fail(status: number, error: string) {
   return NextResponse.json({ error }, { status });
@@ -45,8 +30,7 @@ export async function POST(request: Request) {
   const parsed = parseTutorRequest(body);
   if (!parsed.ok) return fail(400, parsed.error);
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
-  if (!allowed(ip)) return fail(429, "Lissan a besoin d'une petite pause. Réessaie dans quelques minutes.");
+  if (!allowed(clientIp(request))) return fail(429, "Lissan a besoin d'une petite pause. Réessaie dans quelques minutes.");
 
   const { turns, ...context } = parsed.request;
   const last = childTurns(turns) >= MAX_CHILD_TURNS;

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { CountryId } from "@/lib/countries";
 import type { Scenario } from "@/lib/scenarios";
 import { getProfile, logActivity, type Profile, type Word } from "@/lib/store";
 import type { Turn, TutorReply } from "@/lib/tuteur";
@@ -26,7 +27,7 @@ function recognitionClass(): (new () => Recognition) | undefined {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
 }
 
-function speak(text: string, locale: string) {
+function browserSpeak(text: string, locale: string) {
   if (!("speechSynthesis" in window)) return;
   const u = new SpeechSynthesisUtterance(text);
   const voices = window.speechSynthesis.getVoices();
@@ -38,6 +39,43 @@ function speak(text: string, locale: string) {
   u.rate = 0.85;
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
+}
+
+let current: HTMLAudioElement | null = null;
+let speakId = 0;
+// Les phrases déjà prononcées sont gardées : « Réécouter » ne coûte rien de plus.
+const voiceCache = new Map<string, string>();
+
+function stopSpeaking() {
+  speakId += 1;
+  current?.pause();
+  current = null;
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+}
+
+/** La voix neuronale du serveur si elle est configurée, sinon celle du navigateur. */
+async function speak(text: string, derja: CountryId) {
+  stopSpeaking();
+  const mine = speakId;
+  const cacheKey = `${derja}:${text}`;
+  try {
+    let url = voiceCache.get(cacheKey);
+    if (!url) {
+      const res = await fetch("/api/voix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ derja, text }),
+      });
+      if (!res.ok) throw new Error("voix");
+      url = URL.createObjectURL(await res.blob());
+      voiceCache.set(cacheKey, url);
+    }
+    if (mine !== speakId) return;
+    current = new Audio(url);
+    await current.play();
+  } catch {
+    if (mine === speakId) browserSpeak(text, LOCALE[derja]);
+  }
 }
 
 export default function Conversation({ scenario }: { scenario: Scenario }) {
@@ -78,7 +116,7 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
         setError(data?.error ?? "Lissan a eu un souci. Réessaie dans un instant.");
       } else {
         setItems([...history, { role: "tutor", reply: data }]);
-        speak(data.ar, LOCALE[p.derja]);
+        void speak(data.ar, p.derja);
       }
     } catch {
       setError("Connexion impossible. Vérifie le réseau et réessaie.");
@@ -95,7 +133,7 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
     if (p) void ask([], p);
     return () => {
       recognition.current?.stop();
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      stopSpeaking();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -142,7 +180,7 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
     }
     const Rec = recognitionClass();
     if (!Rec) return;
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    stopSpeaking();
     const rec = new Rec();
     rec.lang = locale;
     rec.interimResults = false;
@@ -195,7 +233,7 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
                 <button
                   type="button"
                   className="replay"
-                  onClick={() => speak(item.reply.ar, locale)}
+                  onClick={() => void speak(item.reply.ar, profile?.derja ?? "ma")}
                 >
                   Réécouter
                 </button>
@@ -210,7 +248,7 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
             <p className="bubble-ar" lang="ar" dir="rtl">{lastReply.aide.ar}</p>
             <p>{lastReply.aide.translit}</p>
             <p className="muted">{lastReply.aide.fr}</p>
-            <button type="button" className="replay" onClick={() => speak(lastReply.aide!.ar, locale)}>
+            <button type="button" className="replay" onClick={() => void speak(lastReply.aide!.ar, profile?.derja ?? "ma")}>
               Écouter
             </button>
           </div>
