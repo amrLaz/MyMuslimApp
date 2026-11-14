@@ -11,7 +11,7 @@ import {
   quizOptions,
   type Letter,
 } from "@/lib/alphabet";
-import { markDone } from "@/lib/progress";
+import { markLetterDone } from "@/lib/store";
 
 const STEPS = ["letter", "trace", "quiz", "done"] as const;
 /** Nombre de points tracés à partir duquel on considère que l'enfant a essayé. */
@@ -39,8 +39,8 @@ export default function Lesson({ letter }: { letter: Letter }) {
     (cur === "trace" && traced < MIN_TRACE_POINTS) || (cur === "quiz" && !correct);
 
   useEffect(() => {
-    if (cur === "done") markDone(letter.id);
-  }, [cur, letter.id]);
+    if (cur === "done") markLetterDone(letter.id, letter.name);
+  }, [cur, letter.id, letter.name]);
 
   function speak() {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {

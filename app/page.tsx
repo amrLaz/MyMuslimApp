@@ -82,7 +82,7 @@ export default function Home() {
           <span className="brand-ar" lang="ar" dir="rtl">لسان</span>
         </div>
         <nav className="nav-links" aria-label="Navigation principale">
-          <Link href="/alphabet" className="nav-link">L'alphabet</Link>
+          <Link href="/app" className="nav-link">Ouvrir l'app</Link>
           <a href="#inscription" className="btn-outline">Liste d'attente</a>
         </nav>
       </header>

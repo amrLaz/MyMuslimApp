@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LETTERS } from "@/lib/alphabet";
-import { readProgress } from "@/lib/progress";
+import { getLetters } from "@/lib/store";
 
 export default function AlphabetGrid() {
   const [done, setDone] = useState<string[]>([]);
 
   useEffect(() => {
-    setDone(readProgress());
+    setDone(getLetters());
   }, []);
 
   return (
