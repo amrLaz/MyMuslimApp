@@ -17,14 +17,16 @@ liste d'attente, et premières leçons interactives sur l'alphabet arabe.
 - `/alphabet` : les 28 lettres en quatre niveaux de sept (6 lettres apprises ouvrent le niveau
   suivant), une leçon en cinq étapes pour chacune (découvrir la lettre,
   ses voyelles avec le chakl, la tracer, quiz, bravo).
-- `/app/ecrire` : parcours d'écriture en cinq niveaux, qui s'ouvrent un à un (6 mots sur 8
+- `/app/ecrire` : parcours d'écriture en sept niveaux, qui s'ouvrent un à un (6 mots sur 8
   réussis, en deux essais au plus, pour passer au suivant ; une à trois étoiles selon les
   mots écrits du premier coup). Niveau 1 : recopier de petits mots. 2 : écrire à partir du
   français. 3 : mots plus longs, audio seulement après une erreur. 4 : recopier avec le chakl.
-  5 : écrire avec le chakl, tapé sur le clavier arabe à l'écran. L'app corrige lettre par
+  5 : écrire avec le chakl, tapé sur le clavier arabe à l'écran. 6 : les couleurs. 7 : les
+  nombres, avec le chakl. L'app corrige lettre par
   lettre, puis le chakl lettre par lettre aux niveaux 4 et 5.
 - `/app/chakl` : guide des signes (fatha, damma, kasra, soukoun, chadda, tanwin).
-- `/app/coran` : courtes sourates, écoute verset par verset et répétition.
+- `/app/coran` : neuf courtes sourates en trois niveaux (deux sourates sues par cœur ouvrent
+  le niveau suivant), écoute verset par verset et répétition.
 - `/app/parents` : résumé des 7 derniers jours et effacement des données.
 
 ## Lancer le projet
@@ -88,6 +90,6 @@ l'arabe qui s'écrit.
 
 - Le prix (`[VOTRE PRIX]` dans la FAQ, `app/page.tsx`).
 - Les mentions légales et la politique de confidentialité (pied de page).
-- Une relecture du contenu des 28 lettres et des 39 mots (chakl compris) par un enseignant d'arabe.
+- Une relecture du contenu des 28 lettres et des 55 mots (chakl compris) par un enseignant d'arabe.
 - Des essais du tuteur avec de vrais enfants, dans les trois derjas.
 - La lecture Warsh, annoncée sur la page d'accueil.

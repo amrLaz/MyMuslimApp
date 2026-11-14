@@ -33,7 +33,7 @@ export default function ReadHub() {
         <span className="module-ar" lang="ar" dir="rtl">كتابة</span>
         <span className="module-body">
           <span className="module-title">Écrire des mots</span>
-          <span className="muted">Cinq niveaux : recopier, écrire, puis écrire avec le chakl. Lissan te corrige lettre par lettre.</span>
+          <span className="muted">Sept niveaux : recopier, écrire, puis écrire avec le chakl. Lissan te corrige lettre par lettre.</span>
           <span className="module-progress">{levels} niveau{levels > 1 ? "x" : ""} sur {LEVELS.length} · {words} mot{words > 1 ? "s" : ""} sur {ALL_WORDS.length}</span>
         </span>
       </Link>

@@ -77,6 +77,26 @@ export const LEVELS: Level[] = [
     audio: "always",
     words: words(["أخ", "أسد", "فيل", "شاي", "لحم", "حصان", "رأس", "سيارة"]),
   },
+  {
+    id: "6",
+    n: 6,
+    title: "Les couleurs",
+    goal: "Huit couleurs à écrire sans modèle. L'audio n'arrive qu'après une erreur.",
+    mode: "write",
+    chakl: false,
+    audio: "afterMistake",
+    words: words(["أحمر", "أزرق", "أخضر", "أصفر", "أبيض", "أسود", "وردي", "بني"]),
+  },
+  {
+    id: "7",
+    n: 7,
+    title: "Les nombres avec le chakl",
+    goal: "De un à huit, voyelles et chadda comprises. Le niveau le plus difficile.",
+    mode: "write",
+    chakl: true,
+    audio: "afterMistake",
+    words: words(["واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية"]),
+  },
 ];
 
 export const getLevel = (id: string) => LEVELS.find((l) => l.id === id);

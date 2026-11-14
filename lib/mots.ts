@@ -86,6 +86,38 @@ export const THEMES: Theme[] = [
       { fr: "Tête", ar: "رَأْس", translit: "ra's" },
     ],
   },
+  {
+    id: "couleurs",
+    title: "Les couleurs",
+    ar: "ألوان",
+    description: "Rouge, bleu, vert, jaune, blanc, noir…",
+    words: [
+      { fr: "Rouge", ar: "أَحْمَر", translit: "ahmar" },
+      { fr: "Bleu", ar: "أَزْرَق", translit: "azraq" },
+      { fr: "Vert", ar: "أَخْضَر", translit: "akhdar" },
+      { fr: "Jaune", ar: "أَصْفَر", translit: "asfar" },
+      { fr: "Blanc", ar: "أَبْيَض", translit: "abyad" },
+      { fr: "Noir", ar: "أَسْوَد", translit: "aswad" },
+      { fr: "Rose", ar: "وَرْدِي", translit: "wardi" },
+      { fr: "Marron", ar: "بُنِّي", translit: "bounni" },
+    ],
+  },
+  {
+    id: "nombres",
+    title: "Les nombres",
+    ar: "أرقام",
+    description: "De un à huit.",
+    words: [
+      { fr: "Un", ar: "وَاحِد", translit: "wahid" },
+      { fr: "Deux", ar: "اِثْنَان", translit: "ithnan" },
+      { fr: "Trois", ar: "ثَلَاثَة", translit: "thalatha" },
+      { fr: "Quatre", ar: "أَرْبَعَة", translit: "arbaʿa" },
+      { fr: "Cinq", ar: "خَمْسَة", translit: "khamsa" },
+      { fr: "Six", ar: "سِتَّة", translit: "sitta" },
+      { fr: "Sept", ar: "سَبْعَة", translit: "sabʿa" },
+      { fr: "Huit", ar: "ثَمَانِيَة", translit: "thamaniya" },
+    ],
+  },
 ];
 
 export const getTheme = (id: string) => THEMES.find((t) => t.id === id);

@@ -11,7 +11,7 @@ export default function WritePage() {
         <div>
           <h1 className="lesson-title">Écrire des mots</h1>
           <p className="muted">
-            Cinq niveaux, du plus facile au plus difficile. Réussis 6 mots sur 8 pour ouvrir le niveau
+            Sept niveaux, du plus facile au plus difficile. Réussis 6 mots sur 8 pour ouvrir le niveau
             suivant, et gagne jusqu'à trois étoiles.
           </p>
         </div>

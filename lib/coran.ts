@@ -36,3 +36,19 @@ export function verseAudio(surah: number, verse: number): string {
   const pad = (n: number) => String(n).padStart(3, "0");
   return `https://everyayah.com/data/Husary_128kbps/${pad(surah)}${pad(verse)}.mp3`;
 }
+
+/** Nombre de sourates sues par cœur d'un niveau pour ouvrir le suivant. */
+export const COURSE_PASS = 2;
+
+export const COURSE = [
+  { n: 1, title: "Les premières sourates", ids: [1, 112, 108] },
+  { n: 2, title: "Les courtes sourates", ids: [113, 114, 103] },
+  { n: 3, title: "Pour aller plus loin", ids: [110, 109, 111] },
+];
+
+export const courseLevelOf = (surahId: number) => COURSE.find((l) => l.ids.includes(surahId))!;
+
+export function courseUnlocked(n: number, known: number[]): boolean {
+  if (n <= 1) return true;
+  return COURSE[n - 2].ids.filter((id) => known.includes(id)).length >= COURSE_PASS;
+}

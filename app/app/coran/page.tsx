@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { SURAHS } from "@/lib/coran";
+import SurahPath from "@/components/SurahPath";
 
 export const metadata: Metadata = { title: "Coran · Lissan" };
 
@@ -11,17 +10,12 @@ export default function QuranPage() {
       <div className="stack">
         <div>
           <h1 className="lesson-title">Coran</h1>
-          <p className="muted">Écoute un verset, répète-le, puis passe au suivant.</p>
+          <p className="muted">
+            Écoute un verset, répète-le, puis passe au suivant. Quand tu sais deux sourates d'un
+            niveau par cœur, le niveau suivant s'ouvre.
+          </p>
         </div>
-        {SURAHS.map((s) => (
-          <Link key={s.id} href={`/app/coran/${s.id}`} className="module">
-            <span className="module-ar" lang="ar" dir="rtl">{s.name}</span>
-            <span className="module-body">
-              <span className="module-title">{s.transliteration}</span>
-              <span className="muted">{s.translation} · {s.total_verses} versets</span>
-            </span>
-          </Link>
-        ))}
+        <SurahPath />
       </div>
     </AppShell>
   );

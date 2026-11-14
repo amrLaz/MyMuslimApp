@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import AppShell from "@/components/AppShell";
+import SurahGate from "@/components/SurahGate";
 import SurahReader from "@/components/SurahReader";
 import { SURAHS, getSurah } from "@/lib/coran";
 
@@ -22,7 +23,9 @@ export default async function SurahPage({ params }: Props) {
   if (!surah) notFound();
   return (
     <AppShell back="/app/coran" backLabel="Sourates">
-      <SurahReader key={surah.id} surah={surah} />
+      <SurahGate surahId={surah.id}>
+        <SurahReader key={surah.id} surah={surah} />
+      </SurahGate>
     </AppShell>
   );
 }

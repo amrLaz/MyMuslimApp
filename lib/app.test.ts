@@ -156,9 +156,9 @@ describe("écriture", () => {
 });
 
 describe("niveaux", () => {
-  it("a cinq niveaux de huit mots qui existent tous", async () => {
+  it("a sept niveaux de huit mots qui existent tous", async () => {
     const { LEVELS } = await import("./niveaux");
-    expect(LEVELS.map((l) => l.id)).toEqual(["1", "2", "3", "4", "5"]);
+    expect(LEVELS.map((l) => l.id)).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
     for (const l of LEVELS) {
       expect(l.words, l.title).toHaveLength(8);
       expect(new Set(l.words.map((w) => w.ar)).size, l.title).toBe(8);
@@ -234,5 +234,31 @@ describe("niveaux de l'alphabet et de la conversation", () => {
     expect(at("bonjour")).toContain("Niveau 1, débutant");
     expect(at("table")).toContain("Niveau 2");
     expect(at("mamie")).toContain("Niveau 3");
+  });
+});
+
+describe("niveaux du Coran", () => {
+  it("répartit les neuf sourates en trois niveaux, chacune une seule fois", async () => {
+    const { COURSE, SURAHS } = await import("./coran");
+    expect(COURSE.flatMap((l) => l.ids).sort((a, b) => a - b)).toEqual(SURAHS.map((s) => s.id).sort((a, b) => a - b));
+    expect(COURSE.map((l) => l.ids.length)).toEqual([3, 3, 3]);
+  });
+
+  it("ouvre un niveau quand deux sourates du précédent sont sues par cœur", async () => {
+    const { courseUnlocked } = await import("./coran");
+    expect(courseUnlocked(1, [])).toBe(true);
+    expect(courseUnlocked(2, [1])).toBe(false);
+    expect(courseUnlocked(2, [1, 112])).toBe(true);
+    expect(courseUnlocked(3, [1, 112, 108])).toBe(false);
+    expect(courseUnlocked(3, [113, 114])).toBe(true);
+  });
+
+  it("vérifie les mots des niveaux 6 et 7, y compris le chakl", async () => {
+    const { LEVELS } = await import("./niveaux");
+    const { checkChakl } = await import("./ecriture");
+    for (const l of LEVELS.slice(5)) for (const w of l.words) expect(checkChakl(w.ar, w.ar).ok, w.fr).toBe(true);
+    const deux = LEVELS[6].words.find((w) => w.fr === "Deux")!;
+    expect(checkChakl(deux.ar, "اثنان").ok).toBe(false);
+    expect(checkChakl(deux.ar, deux.ar).ok).toBe(true);
   });
 });
