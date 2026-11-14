@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import AlphabetGate from "@/components/AlphabetGate";
 import Lesson from "@/components/Lesson";
 import { LETTERS, getLetter, letterNumber } from "@/lib/alphabet";
 
@@ -21,5 +22,9 @@ export default async function LessonPage({ params }: Props) {
   const letter = getLetter((await params).id);
   if (!letter) notFound();
   // La clé remet la leçon à zéro quand on passe à la lettre suivante.
-  return <Lesson key={letter.id} letter={letter} />;
+  return (
+    <AlphabetGate letter={letter}>
+      <Lesson key={letter.id} letter={letter} />
+    </AlphabetGate>
+  );
 }

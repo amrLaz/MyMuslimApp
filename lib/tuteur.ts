@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { COUNTRIES, type CountryId } from "./countries";
-import { getScenario, type Scenario } from "./scenarios";
+import { SCENARIO_LEVELS, getScenario, type Scenario } from "./scenarios";
 
 /** Nombre de réponses de l'enfant avant que le tuteur conclue (séance de 5 à 10 minutes). */
 export const MAX_CHILD_TURNS = 8;
@@ -73,6 +73,8 @@ export function systemPrompt({ derja, age, scenario }: Omit<TutorRequest, "turns
 Tu parles avec un enfant de ${age} ans, en derja ${adjective} (l'arabe dialectal parlé à la maison, pas l'arabe littéraire).
 
 La situation du jour : « ${scenario.title} ». ${scenario.brief}
+
+${SCENARIO_LEVELS[scenario.level - 1].guide}
 
 Comment mener la séance :
 - Tes messages sont lus à voix haute à l'enfant : une ou deux phrases très courtes, une seule question à la fois, avec des mots adaptés à son âge.

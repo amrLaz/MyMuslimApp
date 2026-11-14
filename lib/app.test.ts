@@ -200,3 +200,39 @@ describe("niveaux", () => {
     expect(letters.ops.some((o) => o.type === "sub")).toBe(true);
   });
 });
+
+describe("niveaux de l'alphabet et de la conversation", () => {
+  it("répartit les 28 lettres en 4 niveaux, chacune une seule fois, dans l'ordre", async () => {
+    const { ALPHABET_LEVELS, LETTERS } = await import("./alphabet");
+    expect(ALPHABET_LEVELS.flatMap((l) => l.ids)).toEqual(LETTERS.map((l) => l.id));
+    expect(ALPHABET_LEVELS.map((l) => l.ids.length)).toEqual([7, 7, 7, 7]);
+  });
+
+  it("ouvre un niveau de l'alphabet après 6 lettres apprises sur 7", async () => {
+    const { ALPHABET_LEVELS, levelUnlocked } = await import("./alphabet");
+    const ids = ALPHABET_LEVELS[0].ids;
+    expect(levelUnlocked(1, [])).toBe(true);
+    expect(levelUnlocked(2, ids.slice(0, 5))).toBe(false);
+    expect(levelUnlocked(2, ids.slice(0, 6))).toBe(true);
+    expect(levelUnlocked(3, ids.slice(0, 6))).toBe(false);
+  });
+
+  it("ouvre un niveau de conversation quand les deux situations précédentes sont terminées", async () => {
+    const { SCENARIOS, SCENARIO_LEVELS, scenarioUnlocked } = await import("./scenarios");
+    expect(SCENARIO_LEVELS).toHaveLength(3);
+    for (const l of SCENARIO_LEVELS) expect(SCENARIOS.filter((s) => s.level === l.n)).toHaveLength(2);
+    expect(scenarioUnlocked(1, [])).toBe(true);
+    expect(scenarioUnlocked(2, ["bonjour"])).toBe(false);
+    expect(scenarioUnlocked(2, ["bonjour", "famille"])).toBe(true);
+    expect(scenarioUnlocked(3, ["bonjour", "famille", "table"])).toBe(false);
+  });
+
+  it("adapte la consigne du tuteur au niveau", async () => {
+    const { SCENARIOS } = await import("./scenarios");
+    const { systemPrompt } = await import("./tuteur");
+    const at = (id: string) => systemPrompt({ derja: "ma", age: 8, scenario: SCENARIOS.find((s) => s.id === id)! });
+    expect(at("bonjour")).toContain("Niveau 1, débutant");
+    expect(at("table")).toContain("Niveau 2");
+    expect(at("mamie")).toContain("Niveau 3");
+  });
+});

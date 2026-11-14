@@ -273,3 +273,22 @@ export function letterVowels(letter: Letter): { glyph: string; say: string; name
     { glyph: g + HARAKAT.sukun, say: stem, name: "soukoun" },
   ];
 }
+
+/** Nombre de lettres apprises d'un niveau pour ouvrir le suivant. */
+export const ALPHABET_PASS = 6;
+
+export const ALPHABET_LEVELS = [
+  { n: 1, title: "Les premières lettres", ids: ["alif", "ba", "ta", "tha", "jim", "hha", "kha"] },
+  { n: 2, title: "Du dal au sad", ids: ["dal", "dhal", "ra", "zay", "sin", "shin", "sad"] },
+  { n: 3, title: "Du dad au qaf", ids: ["dad", "tta", "zza", "ayn", "ghayn", "fa", "qaf"] },
+  { n: 4, title: "Les dernières lettres", ids: ["kaf", "lam", "mim", "nun", "ha", "waw", "ya"] },
+];
+
+export const levelOfLetter = (letter: Letter) =>
+  ALPHABET_LEVELS.find((l) => l.ids.includes(letter.id))!;
+
+export function levelUnlocked(n: number, learned: string[]): boolean {
+  if (n <= 1) return true;
+  const previous = ALPHABET_LEVELS[n - 2];
+  return previous.ids.filter((id) => learned.includes(id)).length >= ALPHABET_PASS;
+}

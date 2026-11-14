@@ -1,5 +1,7 @@
 export type Scenario = {
   id: string;
+  /** Niveau de difficulté, de 1 à 3. */
+  level: number;
   title: string;
   /** Mot arabe affiché sur la carte. */
   ar: string;
@@ -11,6 +13,7 @@ export type Scenario = {
 export const SCENARIOS: Scenario[] = [
   {
     id: "bonjour",
+    level: 1,
     title: "Dire bonjour",
     ar: "سلام",
     description: "Saluer, demander « ça va ? », dire son âge et ce qu'on aime.",
@@ -19,6 +22,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "journee",
+    level: 2,
     title: "Raconter sa journée",
     ar: "اليوم",
     description: "L'école, les copains, ce qu'on a mangé, ce qu'on a fait.",
@@ -27,6 +31,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "mamie",
+    level: 3,
     title: "Appeler mamie",
     ar: "جدة",
     description: "Lissan joue la grand-mère au téléphone. À toi de lui répondre !",
@@ -35,6 +40,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "table",
+    level: 2,
     title: "À table",
     ar: "ماكلة",
     description: "Demander du pain ou de l'eau, dire que c'est bon, remercier.",
@@ -43,6 +49,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "souk",
+    level: 3,
     title: "Au souk",
     ar: "سوق",
     description: "Acheter des fruits, compter, demander le prix.",
@@ -51,6 +58,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "famille",
+    level: 1,
     title: "La famille",
     ar: "عائلة",
     description: "Papa, maman, frères et sœurs, cousins : qui est qui ?",
@@ -60,3 +68,30 @@ export const SCENARIOS: Scenario[] = [
 ];
 
 export const getScenario = (id: string) => SCENARIOS.find((s) => s.id === id);
+
+export const SCENARIO_LEVELS = [
+  {
+    n: 1,
+    title: "Premiers mots",
+    guide:
+      "Niveau 1, débutant : parle par mots isolés et par phrases de deux à quatre mots. Pose des questions auxquelles on répond par un mot ou par oui/non, et donne toujours un modèle de réponse dans « aide ». Accueille avec enthousiasme une réponse en français.",
+  },
+  {
+    n: 2,
+    title: "Petites phrases",
+    guide:
+      "Niveau 2 : phrases courtes de quatre à sept mots. Pose des questions simples (qui, quoi, où) et attends une phrase complète. Donne l'aide, mais laisse l'enfant essayer d'abord.",
+  },
+  {
+    n: 3,
+    title: "Vraies conversations",
+    guide:
+      "Niveau 3 : parle naturellement mais lentement, relance avec « pourquoi » et « et ensuite ? », et attends deux phrases par réponse. Ne propose l'aide que si l'enfant est vraiment bloqué.",
+  },
+];
+
+/** Un niveau s'ouvre quand toutes les situations du niveau précédent ont été terminées. */
+export function scenarioUnlocked(level: number, doneIds: string[]): boolean {
+  if (level <= 1) return true;
+  return SCENARIOS.filter((s) => s.level === level - 1).every((s) => doneIds.includes(s.id));
+}

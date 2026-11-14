@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import Conversation from "@/components/Conversation";
+import ConversationGate from "@/components/ConversationGate";
 import { SCENARIOS, getScenario } from "@/lib/scenarios";
 
 type Props = { params: Promise<{ id: string }> };
@@ -22,7 +23,9 @@ export default async function ConversationPage({ params }: Props) {
   if (!scenario) notFound();
   return (
     <AppShell back="/app/parler" backLabel="Situations">
-      <Conversation scenario={scenario} />
+      <ConversationGate scenario={scenario}>
+        <Conversation scenario={scenario} />
+      </ConversationGate>
     </AppShell>
   );
 }

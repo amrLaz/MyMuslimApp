@@ -8,10 +8,14 @@ liste d'attente, et premières leçons interactives sur l'alphabet arabe.
 - `/` : page d'accueil et inscription à la liste d'attente.
 - `/app` : l'app de l'enfant. Au premier passage, un parent crée le profil
   (prénom, âge, derja, objectifs).
-- `/app/parler` : conversation à voix haute avec le tuteur IA, en derja, autour
-  d'une situation (raconter sa journée, appeler mamie, au souk…).
+- `/app/parler` : conversation à voix haute avec le tuteur IA, en derja, autour d'une
+  situation. Trois niveaux de deux situations : premiers mots (bonjour, la famille), petites
+  phrases (à table, raconter sa journée), vraies conversations (appeler mamie, au souk). Un
+  niveau s'ouvre quand les deux situations du précédent sont terminées ; le tuteur adapte sa
+  façon de parler au niveau (`SCENARIO_LEVELS` dans `lib/scenarios.ts`).
 - `/app/lire` : « Lire et écrire », qui regroupe l'alphabet, l'écriture de mots et le chakl.
-- `/alphabet` : les 28 lettres, une leçon en cinq étapes pour chacune (découvrir la lettre,
+- `/alphabet` : les 28 lettres en quatre niveaux de sept (6 lettres apprises ouvrent le niveau
+  suivant), une leçon en cinq étapes pour chacune (découvrir la lettre,
   ses voyelles avec le chakl, la tracer, quiz, bravo).
 - `/app/ecrire` : parcours d'écriture en cinq niveaux, qui s'ouvrent un à un (6 mots sur 8
   réussis, en deux essais au plus, pour passer au suivant ; une à trois étoiles selon les

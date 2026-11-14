@@ -1305,3 +1305,45 @@ a.btn-next:hover {
 .key-sign {
   color: var(--clay-deep);
 }
+
+.alpha-level {
+  margin-top: 20px;
+}
+.alpha-level-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+}
+.alpha-level-count {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink-mute);
+}
+.tile.locked {
+  position: relative;
+  background: var(--sand-deep);
+  border-style: dashed;
+  color: var(--ink-mute);
+}
+.tile.locked .tile-glyph {
+  color: var(--ink-mute);
+}
+.tile.locked svg {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+}
+.done-tag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--green-tint);
+  color: #0f3d26;
+  font-size: 12px;
+  font-weight: 700;
+}
