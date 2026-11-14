@@ -36,7 +36,7 @@ export const THEMES: Theme[] = [
       { fr: "École", ar: "مَدْرَسَة", translit: "madrasa" },
       { fr: "Voiture", ar: "سَيَّارَة", translit: "sayyara" },
       { fr: "Arbre", ar: "شَجَرَة", translit: "chajara" },
-      { fr: "Rose", ar: "وَرْدَة", translit: "warda" },
+      { fr: "Rose (la fleur)", ar: "وَرْدَة", translit: "warda" },
     ],
   },
   {
@@ -98,7 +98,7 @@ export const THEMES: Theme[] = [
       { fr: "Jaune", ar: "أَصْفَر", translit: "asfar" },
       { fr: "Blanc", ar: "أَبْيَض", translit: "abyad" },
       { fr: "Noir", ar: "أَسْوَد", translit: "aswad" },
-      { fr: "Rose", ar: "وَرْدِي", translit: "wardi" },
+      { fr: "Rose (la couleur)", ar: "وَرْدِي", translit: "wardi" },
       { fr: "Marron", ar: "بُنِّي", translit: "bounni" },
     ],
   },

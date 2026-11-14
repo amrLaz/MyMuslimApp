@@ -137,6 +137,7 @@ describe("écriture", () => {
     const { stripMarks } = await import("./ecriture");
     const skeletons = ALL_WORDS.map((w) => stripMarks(w.ar));
     expect(new Set(skeletons).size).toBe(ALL_WORDS.length);
+    expect(new Set(ALL_WORDS.map((w) => w.fr)).size).toBe(ALL_WORDS.length);
     for (const w of ALL_WORDS) {
       expect(stripMarks(w.ar), w.fr).toMatch(/^[ء-ي]+$/);
       expect(w.ar.length, w.fr).toBeGreaterThan(stripMarks(w.ar).length);
@@ -260,5 +261,94 @@ describe("niveaux du Coran", () => {
     const deux = LEVELS[6].words.find((w) => w.fr === "Deux")!;
     expect(checkChakl(deux.ar, "اثنان").ok).toBe(false);
     expect(checkChakl(deux.ar, deux.ar).ok).toBe(true);
+  });
+});
+
+describe("révision espacée", () => {
+  const day = (s: string) => new Date(`${s}T10:00:00`);
+
+  it("espace de plus en plus les révisions réussies et ramène un raté au lendemain", async () => {
+    const { enroll, grade, dueKeys } = await import("./revision");
+    let deck = enroll({}, "l:ba", day("2026-11-01"));
+    expect(deck["l:ba"]).toEqual({ box: 1, due: "2026-11-02" });
+    expect(dueKeys(deck, day("2026-11-01"))).toEqual([]);
+    expect(dueKeys(deck, day("2026-11-02"))).toEqual(["l:ba"]);
+    deck = grade(deck, "l:ba", true, day("2026-11-02"));
+    expect(deck["l:ba"]).toEqual({ box: 2, due: "2026-11-05" });
+    deck = grade(deck, "l:ba", true, day("2026-11-05"));
+    expect(deck["l:ba"]).toEqual({ box: 3, due: "2026-11-12" });
+    deck = grade(deck, "l:ba", false, day("2026-11-12"));
+    expect(deck["l:ba"]).toEqual({ box: 1, due: "2026-11-13" });
+    // un élément déjà inscrit garde sa place ; un mot raté est à revoir le jour même
+    expect(enroll(deck, "l:ba", day("2026-12-01"))).toBe(deck);
+    expect(enroll({}, "m:كلب", day("2026-11-01"), true)["m:كلب"].due).toBe("2026-11-01");
+  });
+
+  it("plafonne à la boîte 5 et compte les éléments acquis", async () => {
+    const { grade, deckStats } = await import("./revision");
+    let deck: Record<string, { box: number; due: string }> = { a: { box: 5, due: "2026-11-01" }, b: { box: 2, due: "2026-11-01" } };
+    deck = grade(deck, "a", true, day("2026-11-01"));
+    expect(deck.a).toEqual({ box: 5, due: "2026-12-01" });
+    expect(deckStats(deck)).toEqual({ total: 2, mastered: 1 });
+  });
+
+  it("compte les jours de suite, en tolérant que la journée ne soit pas encore faite", async () => {
+    const { streak } = await import("./revision");
+    const now = day("2026-11-14");
+    expect(streak([], now)).toBe(0);
+    expect(streak(["2026-11-14", "2026-11-13", "2026-11-12"], now)).toBe(3);
+    expect(streak(["2026-11-13", "2026-11-12"], now)).toBe(2);
+    expect(streak(["2026-11-12", "2026-11-11"], now)).toBe(0);
+    expect(streak(["2026-11-14", "2026-11-12"], now)).toBe(1);
+  });
+
+  it("fabrique un exercice valide pour chaque lettre et chaque mot", async () => {
+    const { buildExercises, rngFrom } = await import("./exercices");
+    const { LETTERS } = await import("./alphabet");
+    const { ALL_WORDS } = await import("./mots");
+    const { stripMarks } = await import("./ecriture");
+    const keys = [...LETTERS.map((l) => `l:${l.id}`), ...ALL_WORDS.map((w) => `m:${stripMarks(w.ar)}`)];
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const list = buildExercises(keys, rngFrom(seed));
+      expect(list).toHaveLength(keys.length);
+      for (const ex of list) {
+        if (ex.options) {
+          expect(ex.options, ex.key).toHaveLength(3);
+          expect(ex.options.filter((o) => o.correct), ex.key).toHaveLength(1);
+          expect(new Set(ex.options.map((o) => o.label)).size, ex.key).toBe(3);
+          expect(Boolean(ex.show) || Boolean(ex.audio), ex.key).toBe(true);
+        } else {
+          expect([...ex.tiles!].sort().join(""), ex.key).toBe([...ex.answer!].sort().join(""));
+          expect(ex.tiles!.join(""), ex.key).not.toBe(ex.answer);
+        }
+      }
+    }
+    expect(buildExercises(["l:inconnu", "m:xyz"], rngFrom(1))).toEqual([]);
+  });
+
+  it("propose la suite selon les objectifs de la famille", async () => {
+    const { nextStep } = await import("./suite");
+    const none = { letters: [], levels: {}, talks: [], surahs: [] };
+    expect(nextStep(["lire"], none)?.href).toBe("/alphabet/alif");
+    expect(nextStep(["parler"], none)?.href).toBe("/app/parler/bonjour");
+    expect(nextStep(["coran"], none)?.href).toBe("/app/coran/1");
+    // après quatre lettres, on passe à l'écriture
+    expect(nextStep(["lire"], { ...none, letters: ["alif", "ba", "ta", "tha"] })?.href).toBe("/app/ecrire/1");
+    // la situation suivante du même niveau, puis le niveau 2 une fois les deux terminées
+    expect(nextStep(["parler"], { ...none, talks: ["bonjour"] })?.href).toBe("/app/parler/famille");
+    expect(nextStep(["parler"], { ...none, talks: ["bonjour", "famille"] })?.href).toBe("/app/parler/journee");
+  });
+
+  it("calcule les points à partir du journal", async () => {
+    const { points } = await import("./store");
+    const at = "2026-11-14T10:00:00Z";
+    const w = { ar: "x", translit: "x", fr: "x" };
+    expect(points([
+      { at, kind: "lettre", id: "ba", label: "Ba" },
+      { at, kind: "ecriture", id: "niveau-1", label: "", words: [w, w, w] },
+      { at, kind: "conversation", id: "bonjour", label: "" },
+      { at, kind: "sourate", id: "112", label: "" },
+      { at, kind: "revision", id: "j", label: "", score: 7 },
+    ])).toBe(20 + 30 + 30 + 15 + 35);
   });
 });

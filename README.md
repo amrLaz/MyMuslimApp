@@ -8,6 +8,13 @@ liste d'attente, et premières leçons interactives sur l'alphabet arabe.
 - `/` : page d'accueil et inscription à la liste d'attente.
 - `/app` : l'app de l'enfant. Au premier passage, un parent crée le profil
   (prénom, âge, derja, objectifs).
+- `/app` affiche la **séance du jour** : d'abord la révision de ce qui est dû, puis la prochaine
+  chose à apprendre selon les objectifs de la famille (`lib/suite.ts`), avec la série de jours,
+  les points et la semaine en cours.
+- `/app/revision` : révision espacée des lettres et des mots appris (boîtes de Leitner : 1, 3,
+  7, 14 puis 30 jours ; un raté revient le lendemain). Quatre types d'exercices tirés au sort :
+  reconnaître, écouter et choisir, traduire, remettre les lettres dans l'ordre. Un exercice raté
+  revient en fin de séance, avec l'explication (`lib/revision.ts`, `lib/exercices.ts`).
 - `/app/parler` : conversation à voix haute avec le tuteur IA, en derja, autour d'une
   situation. Trois niveaux de deux situations : premiers mots (bonjour, la famille), petites
   phrases (à table, raconter sa journée), vraies conversations (appeler mamie, au souk). Un

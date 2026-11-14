@@ -2,6 +2,7 @@
 // pas de compte, rien n'est enregistré sur nos serveurs.
 import { useEffect, useState } from "react";
 import type { CountryId } from "./countries";
+import { dayKey, enroll, letterKey, wordKey, type Deck } from "./revision";
 
 export const GOALS = [
   { id: "parler", label: "Parler avec la famille" },
@@ -14,7 +15,7 @@ export type Profile = { name: string; age: number; derja: CountryId; goals: Goal
 export type Word = { ar: string; translit: string; fr: string };
 export type Activity = {
   at: string;
-  kind: "lettre" | "conversation" | "sourate" | "ecriture";
+  kind: "lettre" | "conversation" | "sourate" | "ecriture" | "revision";
   id: string;
   label: string;
   words?: Word[];
@@ -22,6 +23,8 @@ export type Activity = {
   corrections?: number;
   /** Mots écrits à revoir (exercice d'écriture). */
   review?: Word[];
+  /** Nombre de bonnes réponses du premier coup (séance de révision). */
+  score?: number;
 };
 
 const KEYS = {
@@ -31,6 +34,7 @@ const KEYS = {
   surahs: "lissan.sourates",
   words: "lissan.mots",
   levels: "lissan.niveaux",
+  deck: "lissan.revision",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -69,6 +73,7 @@ function addOnce(key: string, id: string): boolean {
 export const getLetters = () => read<string[]>(KEYS.letters, []);
 export function markLetterDone(id: string, label: string): void {
   if (addOnce(KEYS.letters, id)) logActivity({ kind: "lettre", id, label });
+  saveDeck(enroll(getDeck(), letterKey(id), new Date()));
 }
 
 export const getSurahs = () => read<number[]>(KEYS.surahs, []);
@@ -81,6 +86,31 @@ export const getWords = () => read<string[]>(KEYS.words, []);
 export function markWordsDone(words: string[]): void {
   const known = getWords();
   write(KEYS.words, [...known, ...words.filter((w) => !known.includes(w))]);
+  const now = new Date();
+  saveDeck(words.reduce((deck, w) => enroll(deck, wordKey(w), now), getDeck()));
+}
+
+/** Les mots ratés à l'écriture reviennent en révision le jour même. */
+export function enrollMissedWords(words: string[]): void {
+  const now = new Date();
+  saveDeck(words.reduce((deck, w) => enroll(deck, wordKey(w), now, true), getDeck()));
+}
+
+export const getDeck = () => read<Deck>(KEYS.deck, {});
+export const saveDeck = (deck: Deck) => write(KEYS.deck, deck);
+
+/** Les jours (heure locale) où l'enfant a fait quelque chose. */
+export const activeDays = (journal: Activity[]) => journal.map((a) => dayKey(new Date(a.at)));
+
+/** Points gagnés depuis le début, calculés à partir du journal. */
+export function points(journal: Activity[]): number {
+  return journal.reduce((n, a) => {
+    if (a.kind === "lettre") return n + 20;
+    if (a.kind === "conversation") return n + 30;
+    if (a.kind === "sourate") return n + 15;
+    if (a.kind === "ecriture") return n + 10 * (a.words?.length ?? 0);
+    return n + 5 * (a.score ?? 0);
+  }, 0);
 }
 
 export type LevelProgress = Record<string, { passed: boolean; stars: number }>;

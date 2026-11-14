@@ -8,7 +8,7 @@ import { advice, check, checkChakl, chaklAdvice, stripMarks, type ChaklCheck } f
 import { QUIZ_CHOICES, chaklQuestion } from "@/lib/mots";
 import { LEVELS, PASS_MARK, starsFor, type Level } from "@/lib/niveaux";
 import { speak } from "@/lib/speech";
-import { getProfile, logActivity, markWordsDone, saveLevelResult } from "@/lib/store";
+import { enrollMissedWords, getProfile, logActivity, markWordsDone, saveLevelResult } from "@/lib/store";
 import type { Mot } from "@/lib/mots";
 
 type Phase = "write" | "right" | "revealed";
@@ -68,6 +68,7 @@ export default function WritingSession({ level }: { level: Level }) {
     logged.current = true;
     const good = outcomes.filter((o) => o.ok).map((o) => o.word);
     markWordsDone(good.map((w) => stripMarks(w.ar)));
+    enrollMissedWords(outcomes.filter((o) => !o.ok).map((o) => stripMarks(o.word.ar)));
     saveLevelResult(level.id, passed, stars);
     logActivity({
       kind: "ecriture",

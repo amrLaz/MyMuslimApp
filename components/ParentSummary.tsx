@@ -6,8 +6,11 @@ import { useState } from "react";
 import { LETTERS } from "@/lib/alphabet";
 import { SURAHS } from "@/lib/coran";
 import { COUNTRIES } from "@/lib/countries";
+import { deckStats, dueKeys, streak } from "@/lib/revision";
 import {
+  activeDays,
   eraseEverything,
+  getDeck,
   getJournal,
   getLetters,
   getProfile,
@@ -26,6 +29,9 @@ export default function ParentSummary() {
     letters: getLetters(),
     surahs: getSurahs(),
     words: getWords(),
+    memory: deckStats(getDeck()),
+    due: dueKeys(getDeck(), new Date()).length,
+    streak: streak(activeDays(getJournal()), new Date()),
   }));
 
   if (!ready || !value) return null;
@@ -43,6 +49,7 @@ export default function ParentSummary() {
   const talks = week.filter((a) => a.kind === "conversation");
   const newLetters = week.filter((a) => a.kind === "lettre");
   const listens = week.filter((a) => a.kind === "sourate");
+  const reviews = week.filter((a) => a.kind === "revision");
   const writes = week.filter((a) => a.kind === "ecriture");
   const written = writes.flatMap((a) => a.words ?? []);
   const toReview = [...new Map(writes.flatMap((a) => a.review ?? []).map((w) => [w.ar, w])).values()];
@@ -73,7 +80,8 @@ export default function ParentSummary() {
           <p>Pas encore d'activité cette semaine.</p>
         ) : (
           <ul className="summary">
-            <li><strong>{days}</strong> jour{days > 1 ? "s" : ""} d'activité</li>
+            <li><strong>{days}</strong> jour{days > 1 ? "s" : ""} d'activité ({value.streak} de suite)</li>
+            <li><strong>{reviews.length}</strong> séance{reviews.length > 1 ? "s" : ""} de révision</li>
             <li><strong>{talks.length}</strong> conversation{talks.length > 1 ? "s" : ""} en derja</li>
             <li><strong>{newLetters.length}</strong> nouvelle{newLetters.length > 1 ? "s" : ""} lettre{newLetters.length > 1 ? "s" : ""}</li>
             <li><strong>{written.length}</strong> mot{written.length > 1 ? "s" : ""} écrit{written.length > 1 ? "s" : ""} en arabe</li>
@@ -103,6 +111,18 @@ export default function ParentSummary() {
           <li><strong>{wordsDone.length}</strong> mot{wordsDone.length > 1 ? "s" : ""} écrit{wordsDone.length > 1 ? "s" : ""} correctement</li>
           <li><strong>{surahs.length}</strong> sourate{surahs.length > 1 ? "s" : ""} sur {SURAHS.length} connue{surahs.length > 1 ? "s" : ""} par cœur</li>
         </ul>
+      </section>
+
+      <section className="next-card">
+        <p className="caps">Mémorisation</p>
+        <ul className="summary">
+          <li><strong>{value.memory.mastered}</strong> élément{value.memory.mastered > 1 ? "s" : ""} bien mémorisé{value.memory.mastered > 1 ? "s" : ""} sur {value.memory.total} (lettres et mots)</li>
+          <li><strong>{value.due}</strong> à réviser aujourd'hui</li>
+        </ul>
+        <p className="lesson-note">
+          L'app refait réviser chaque lettre et chaque mot après 1, 3, 7, 14 puis 30 jours. Un
+          élément raté revient dès le lendemain.
+        </p>
       </section>
 
       <section className="next-card">
