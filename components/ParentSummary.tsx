@@ -112,7 +112,8 @@ export default function ParentSummary() {
 
       <p className="lesson-note">
         Ce suivi est calculé sur cet appareil. Rien n'est enregistré sur nos serveurs ; seul ce que
-        l'enfant dit en conversation est envoyé à notre fournisseur d'IA, sans son prénom.
+        l'enfant dit en conversation (enregistrement vocal et texte) est envoyé à nos prestataires de
+        voix et d'IA, sans son prénom.
       </p>
 
       <Link href="/app/bienvenue" className="btn-plain link-btn">Modifier le profil</Link>

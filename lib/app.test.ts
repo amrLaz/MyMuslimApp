@@ -86,3 +86,17 @@ describe("voix", () => {
     expect(parseSpeechRequest({ derja: "ma", text: "  " }).ok).toBe(false);
   });
 });
+
+describe("wav", () => {
+  it("écrit un en-tête WAV 16 bits mono valide", async () => {
+    const { pcm16Wav } = await import("./wav");
+    const blob = pcm16Wav(new Float32Array([0, 1, -1, 2]), 16000);
+    const view = new DataView(await blob.arrayBuffer());
+    const tag = (o: number) => String.fromCharCode(...[0, 1, 2, 3].map((i) => view.getUint8(o + i)));
+    expect([tag(0), tag(8), tag(36)]).toEqual(["RIFF", "WAVE", "data"]);
+    expect(view.getUint32(24, true)).toBe(16000);
+    expect(view.getUint32(40, true)).toBe(8);
+    expect(blob.size).toBe(44 + 8);
+    expect([view.getInt16(46, true), view.getInt16(48, true), view.getInt16(50, true)]).toEqual([32767, -32768, 32767]);
+  });
+});

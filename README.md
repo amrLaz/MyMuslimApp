@@ -45,8 +45,10 @@ avec `TUTOR_MODEL`. La consigne du tuteur et ses garde-fous sont dans
 parle avec les voix neuronales d'Azure Speech propres à chaque pays (Mouna pour
 le Maroc, Amina pour l'Algérie, Reem pour la Tunisie), via `app/api/voix`. Sans
 ces variables, l'app utilise la voix du navigateur, nettement plus robotique.
-Le micro de l'enfant utilise toujours la reconnaissance vocale du navigateur :
-sa qualité en derja dépend de l'appareil.
+**Micro de l'enfant.** Avec les mêmes variables Azure, la voix de l'enfant est
+enregistrée dans le navigateur, convertie en WAV puis transcrite par Azure Speech
+en marocain, algérien ou tunisien (`app/api/ecoute`). Sans Azure, l'app tente la
+reconnaissance vocale du navigateur, peu fiable sur iPhone et en derja.
 
 ## Coran
 
@@ -58,8 +60,9 @@ depuis everyayah.com. La lecture Warsh n'est pas encore proposée.
 ## Données de l'enfant
 
 Le profil et la progression restent dans le navigateur (`localStorage`) : aucun
-compte, rien n'est enregistré sur le serveur. Seul ce que l'enfant dit en
-conversation est envoyé à l'API d'IA, avec son âge et sa derja, sans son prénom.
+compte, rien n'est enregistré sur le serveur. Ce que l'enfant dit en
+conversation (son enregistrement vocal et le texte) est envoyé à Azure Speech et à
+l'API d'IA, avec son âge et sa derja, sans son prénom.
 
 ## Contenu des leçons
 

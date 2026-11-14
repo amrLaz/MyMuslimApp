@@ -5,7 +5,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { CountryId } from "@/lib/countries";
 import type { Scenario } from "@/lib/scenarios";
 import { getProfile, logActivity, type Profile, type Word } from "@/lib/store";
+import { MicError, canRecord, startRecording, type Recorder } from "@/lib/recorder";
 import type { Turn, TutorReply } from "@/lib/tuteur";
+import { recordingToWav } from "@/lib/wav";
 
 type Item = { role: "tutor"; reply: TutorReply } | { role: "child"; text: string };
 
@@ -14,7 +16,7 @@ type Recognition = {
   lang: string;
   interimResults: boolean;
   onresult: ((e: { results: { 0: { transcript: string } }[] }) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((e: { error?: string }) => void) | null;
   onend: (() => void) | null;
   start(): void;
   stop(): void;
@@ -86,6 +88,11 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
   const [canListen, setCanListen] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  // Reconnaissance du serveur (Azure) si elle est configurée, sinon celle du navigateur.
+  const serverStt = useRef(false);
+  const recorder = useRef<Recorder | null>(null);
+  const autoStop = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const recognition = useRef<Recognition | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
@@ -130,9 +137,19 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
     const p = getProfile();
     setProfile(p);
     setCanListen(Boolean(recognitionClass()));
+    // La reconnaissance du serveur comprend mieux la derja et marche sur tous les téléphones.
+    void fetch("/api/ecoute")
+      .then((r) => r.json() as Promise<{ enabled?: boolean }>)
+      .then((d) => {
+        serverStt.current = d.enabled === true && canRecord();
+        setCanListen(serverStt.current || Boolean(recognitionClass()));
+      })
+      .catch(() => {});
     if (p) void ask([], p);
     return () => {
       recognition.current?.stop();
+      if (autoStop.current) clearTimeout(autoStop.current);
+      void recorder.current?.stop();
       stopSpeaking();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,22 +190,77 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
     if (profile) void ask(items, profile);
   }
 
-  function toggleMic() {
+  async function finishRecording() {
+    if (autoStop.current) clearTimeout(autoStop.current);
+    const rec = recorder.current;
+    recorder.current = null;
+    setListening(false);
+    if (!rec || !profile) return;
+    setTranscribing(true);
+    try {
+      const wav = await recordingToWav(await rec.stop());
+      const res = await fetch(`/api/ecoute?derja=${profile.derja}`, { method: "POST", body: wav });
+      const data = (await res.json().catch(() => null)) as { text?: string } | null;
+      if (!res.ok || !data) {
+        setError("Je n'ai pas pu t'écouter. Écris ta réponse, ou réessaie dans un instant.");
+      } else if (!data.text) {
+        setError("Je n'ai rien entendu. Rapproche-toi du téléphone, parle un peu plus fort et réessaie.");
+      } else {
+        setTranscribing(false);
+        send(data.text);
+        return;
+      }
+    } catch {
+      setError("Je n'ai pas pu t'écouter. Écris ta réponse, ou réessaie dans un instant.");
+    }
+    setTranscribing(false);
+  }
+
+  async function toggleMic() {
     if (listening) {
-      recognition.current?.stop();
+      if (serverStt.current) void finishRecording();
+      else recognition.current?.stop();
+      return;
+    }
+    stopSpeaking();
+    setError("");
+    if (serverStt.current) {
+      try {
+        recorder.current = await startRecording();
+      } catch (err) {
+        const reason = err instanceof MicError ? err.reason : "unsupported";
+        setError(
+          reason === "denied"
+            ? "Le micro est bloqué. Autorise-le dans les réglages du navigateur pour ce site, puis réessaie."
+            : reason === "none"
+              ? "Je ne trouve pas de micro sur cet appareil."
+              : "Le micro ne marche pas dans ce navigateur. Écris ta réponse.",
+        );
+        return;
+      }
+      setListening(true);
+      // Une phrase d'enfant dure quelques secondes : on coupe à 12 secondes.
+      autoStop.current = setTimeout(() => void finishRecording(), 12_000);
       return;
     }
     const Rec = recognitionClass();
     if (!Rec) return;
-    stopSpeaking();
     const rec = new Rec();
     rec.lang = locale;
     rec.interimResults = false;
     rec.onresult = (e) => send(e.results[0][0].transcript);
-    rec.onerror = () => setError("Je n'ai pas entendu. Appuie sur le micro et réessaie, ou écris ta réponse.");
+    rec.onerror = (e) => {
+      const code = e?.error;
+      setError(
+        code === "not-allowed" || code === "service-not-allowed"
+          ? "Le micro est bloqué. Autorise-le dans les réglages du navigateur (et la dictée sur iPhone), puis réessaie."
+          : code === "language-not-supported"
+            ? "Ce téléphone ne comprend pas cette derja à voix haute. Écris ta réponse."
+            : "Je n'ai pas entendu. Appuie sur le micro et réessaie, ou écris ta réponse.",
+      );
+    };
     rec.onend = () => setListening(false);
     recognition.current = rec;
-    setError("");
     setListening(true);
     rec.start();
   }
@@ -291,10 +363,10 @@ export default function Conversation({ scenario }: { scenario: Scenario }) {
               type="button"
               className={listening ? "mic on" : "mic"}
               aria-pressed={listening}
-              disabled={busy || items.length === 0}
+              disabled={busy || transcribing || items.length === 0}
               onClick={toggleMic}
             >
-              {listening ? "Je t'écoute… (appuie pour arrêter)" : "Appuie et parle"}
+              {transcribing ? "Je réfléchis à ce que tu as dit…" : listening ? "Je t'écoute… (appuie pour arrêter)" : "Appuie et parle"}
             </button>
           )}
           <form

@@ -108,8 +108,8 @@ export default function Onboarding() {
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
         <span>
           Je suis le parent ou le responsable légal de l'enfant. J'accepte que ce qu'il dit pendant
-          les conversations soit envoyé à notre fournisseur d'IA pour produire les réponses du
-          tuteur, sans son prénom.
+          les conversations (son enregistrement vocal et le texte reconnu) soit envoyé à nos
+          prestataires de voix et d'IA pour produire les réponses du tuteur, sans son prénom.
         </span>
       </label>
 
